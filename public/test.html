@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>测试页面</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f0f0f0;
+      color: #333;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #e74c3c;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>网站测试页面</h1>
+    <p>如果您能看到这个页面，说明部署已经成功。</p>
+    <p>当前时间: <span id="current-time"></span></p>
+    <p><a href="index.html">返回主页</a></p>
+  </div>
+
+  <script>
+    document.getElementById('current-time').textContent = new Date().toLocaleString();
+  </script>
+</body>
+</html> 
