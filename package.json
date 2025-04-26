@@ -1,0 +1,13 @@
+{
+  "name": "xhs-business",
+  "version": "1.0.0",
+  "description": "小红书业务集合网站",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve",
+    "build": "echo 'No build step required for static site'"
+  },
+  "dependencies": {
+    "serve": "^14.0.0"
+  }
+} 
