@@ -5,11 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>功能集合</title>
   <link rel="stylesheet" href="styles.css">
+  <script>
+    console.log('页面开始加载');
+    window.addEventListener('error', function(e) {
+      console.error('全局错误：', e.message, e.filename, e.lineno);
+    }, true);
+  </script>
 </head>
 <body>
   <!-- Banner区域 -->
   <div class="banner">
     <!-- Banner图片通过CSS背景设置 -->
+    <h1 style="text-align: center; color: white; padding-top: 20px;">小红书业务集合</h1>
   </div>
   
   <!-- 内容区域 -->
@@ -17,12 +24,15 @@
     <div class="container">
       <div class="grid" id="card-container">
         <!-- 卡片将通过JavaScript动态生成 -->
+        <p id="loading-text">加载中...</p>
       </div>
     </div>
   </div>
 
   <script>
+    console.log('开始执行脚本');
     document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM已完全加载');
       // 直接在JavaScript中定义数据，避免跨域问题
       const data = [
         { 
@@ -63,10 +73,16 @@
         }
       ];
       
+      console.log('数据已准备好:', data.length, '个项目');
       const container = document.getElementById('card-container');
+      const loadingText = document.getElementById('loading-text');
+      if (loadingText) {
+        container.removeChild(loadingText);
+      }
       
       // 为每个子网页创建卡片
-      data.forEach(item => {
+      data.forEach((item, index) => {
+        console.log('创建卡片:', index, item.title);
         const card = document.createElement('a');
         card.href = item.path;
         card.className = 'card';
@@ -95,6 +111,7 @@
         image.src = item.image;
         image.alt = item.title;
         image.onerror = function() {
+          console.error('图片加载失败:', item.image);
           // 图片加载失败时显示背景色
           this.style.display = 'none';
           imageContainer.classList.add('image-fallback');
@@ -107,6 +124,7 @@
         
         container.appendChild(card);
       });
+      console.log('所有卡片创建完成');
     });
   </script>
 </body>

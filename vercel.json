@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "builds": [
+    { "src": "**/*", "use": "@vercel/static" }
   ],
-  "cleanUrls": true,
-  "trailingSlash": false
+  "routes": [
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
 } 
