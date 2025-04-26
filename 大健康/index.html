@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三维分子可视化</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+        canvas {
+            display: block;
+        }
+        .controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            z-index: 100;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .controls button {
+            margin: 5px;
+            padding: 5px 10px;
+            border: none;
+            background: #444;
+            color: white;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .controls button:hover {
+            background: #666;
+        }
+        .control-group {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .export-btn {
+            background: #28a745 !important;
+            width: 100%;
+            margin: 10px 0 5px 0 !important;
+        }
+        .export-btn:hover {
+            background: #218838 !important;
+        }
+        input[type="number"] {
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 3px;
+            padding: 4px;
+            width: 60px;
+        }
+        .view-toggle {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .view-toggle button {
+            flex: 1;
+            margin: 2px;
+        }
+        .active-view {
+            background: #555 !important;
+        }
+        .geometry-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+        }
+    </style>
+    <!-- 直接从CDN加载Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- 加载OrbitControls控制器 -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div class="controls">
+        <div class="control-group">
+            <h3 style="margin: 5px 0;">几何体类型</h3>
+            <div class="geometry-buttons">
+                <button id="sphere">球体</button>
+                <button id="cube">立方体</button>
+                <button id="torus">环形</button>
+                <button id="cylinder">圆柱体</button>
+                <button id="cone">三棱锥</button>
+                <button id="triangular-prism">三棱柱</button>
+                <button id="hexprism">六棱柱</button>
+                <button id="circular-cone">圆锥</button>
+            </div>
+            
+            <div class="view-toggle">
+                <button id="orthographic" class="active-view">正交视图</button>
+                <button id="perspective">透视视图</button>
+            </div>
+        </div>
+        
+        <div class="view-toggle" style="margin-top: 5px;">
+            <button id="front-view">正视图</button>
+            <button id="side-view">侧视图</button>
+            <button id="top-view">俯视图</button>
+        </div>
+        
+        <div class="control-group">
+            <h3 style="margin: 5px 0;">布线和外观</h3>
+            <div style="margin-top: 10px;">
+                <label for="density" style="color: white; margin-right: 10px;">布线密度:</label>
+                <input type="range" id="density" min="3" max="64" step="1" value="16" style="width: 100px;">
+                <span id="densityValue" style="color: white; margin-left: 5px;">16</span>
+            </div>
+            
+            <div style="margin-top: 10px;">
+                <label for="particleSizeSlider" style="color: white; margin-right: 10px;">小球大小:</label>
+                <input type="range" id="particleSizeSlider" min="0.05" max="1" step="0.01" value="0.3" style="width: 100px;">
+                <span id="particleSizeValue" style="color: white; margin-left: 5px;">0.3</span>
+            </div>
+            
+            <div style="margin-top: 10px;">
+                <label for="geometrySizeSlider" style="color: white; margin-right: 10px;">几何体尺寸:</label>
+                <input type="range" id="geometrySizeSlider" min="5" max="20" step="1" value="10" style="width: 100px;">
+                <span id="geometrySizeValue" style="color: white; margin-left: 5px;">10</span>
+            </div>
+            
+            <div style="margin-top: 10px;">
+                <label for="customColor" style="color: white; margin-right: 10px;">小球颜色:</label>
+                <input type="color" id="customColor" value="#ffffff" style="vertical-align: middle;">
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <h3 style="margin: 5px 0;">背景设置</h3>
+            <div>
+                <label for="bgColor" style="color: white; margin-right: 10px;">背景颜色:</label>
+                <input type="color" id="bgColor" value="#000000" style="vertical-align: middle;">
+            </div>
+            
+            <div style="margin-top: 10px;">
+                <label style="color: white;">
+                    <input type="checkbox" id="transparentBg"> 透明背景
+                </label>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <h3 style="margin: 5px 0;">光照设置</h3>
+            <div style="margin-top: 10px;">
+                <label for="mainLight" style="color: white; margin-right: 10px;">主光源亮度:</label>
+                <input type="range" id="mainLight" min="0" max="2" step="0.1" value="0.8" style="width: 100px;">
+                <span id="mainLightValue" style="color: white; margin-left: 5px;">0.8</span>
+            </div>
+            
+            <div style="margin-top: 10px;">
+                <label for="ambientLight" style="color: white; margin-right: 10px;">环境光亮度:</label>
+                <input type="range" id="ambientLight" min="0" max="1" step="0.1" value="0.5" style="width: 100px;">
+                <span id="ambientLightValue" style="color: white; margin-left: 5px;">0.5</span>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <h3 style="margin: 5px 0;">导出</h3>
+            <button id="exportPNG" class="export-btn">导出PNG图片</button>
+        </div>
+    </div>
+    
+    <!-- 直接内联脚本，避免导入问题 -->
+    <script>
+        // 设置场景和相机
+        const scene = new THREE.Scene();
+        
+        // 光照设置
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        
+        // 添加方向光（固定在世界坐标系中）
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 10, 10);
+        scene.add(directionalLight);
+        
+        // 设置相机 - 使用正交相机和透视相机
+        const frustumSize = 30;
+        const aspect = window.innerWidth / window.innerHeight;
+        
+        const orthographicCamera = new THREE.OrthographicCamera(
+            frustumSize * aspect / -2,
+            frustumSize * aspect / 2,
+            frustumSize / 2,
+            frustumSize / -2,
+            0.1,
+            1000
+        );
+        orthographicCamera.position.set(0, 0, 20);
+        
+        const perspectiveCamera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+        perspectiveCamera.position.set(0, 0, 20);
+        
+        // 默认使用正交相机
+        let camera = orthographicCamera;
+        let isOrthographic = true;
+        
+        // 设置相机初始位置
+        orthographicCamera.position.set(0, 0, 20);
+        perspectiveCamera.position.set(0, 0, 20);
+        
+        const renderer = new THREE.WebGLRenderer({ 
+            antialias: true, 
+            preserveDrawingBuffer: true,
+            alpha: true 
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        // 设置控制器，用于旋转场景
+        const controls = new THREE.OrbitControls(orthographicCamera, renderer.domElement);
+        controls.enableDamping = true; // 启用阻尼效果
+        controls.dampingFactor = 0.05;
+
+        // 控制相机更新
+        controls.update();
+
+        // 参数设置
+        let particles = [];
+        let currentDistribution = 'sphere';
+        let geometryResolution = 20; // 默认分辨率
+        let geometrySize = 10; // 默认几何体尺寸
+        let particleSize = 0.3; // 默认小球大小
+        let sphereGeometry = new THREE.SphereGeometry(particleSize, 64, 64);
+
+        // 设置默认值
+        let customColorValue = '#ffffff';
+
+        // 切换相机类型
+        function switchCamera(useOrthographic) {
+            if (useOrthographic) {
+                camera = orthographicCamera;
+                controls.object = orthographicCamera;
+                document.getElementById('orthographic').classList.add('active-view');
+                document.getElementById('perspective').classList.remove('active-view');
+                isOrthographic = true;
+            } else {
+                camera = perspectiveCamera;
+                controls.object = perspectiveCamera;
+                document.getElementById('perspective').classList.add('active-view');
+                document.getElementById('orthographic').classList.remove('active-view');
+                isOrthographic = false;
+            }
+            
+            // 重新渲染
+            renderer.render(scene, camera);
+        }
+
+        // 获取小球颜色材质
+        function getRandomColor() {
+            return new THREE.MeshStandardMaterial({
+                color: new THREE.Color(customColorValue),
+                roughness: 0.3,
+                metalness: 0.0,
+                flatShading: false,
+                emissive: new THREE.Color(customColorValue).multiplyScalar(0.1),
+                shininess: 50
+            });
+        }
+
+        // 清除所有现有粒子
+        function clearParticles() {
+            for (let particle of particles) {
+                scene.remove(particle);
+            }
+            particles = [];
+        }
+
+        // 更新小球几何体
+        function updateSphereGeometry() {
+            sphereGeometry = new THREE.SphereGeometry(particleSize, 64, 64);
+        }
+
+        // 在球体表面生成更均匀的粒子分布（使用菲波那契分布）
+        function createSphericalDistribution() {
+            clearParticles();
+            currentDistribution = 'sphere';
+            
+            // 使用菲波那契分布创建球面上的点
+            const numPoints = geometryResolution * 20; // 点的数量
+            const phi = Math.PI * (3 - Math.sqrt(5)); // 黄金角
+            
+            for (let i = 0; i < numPoints; i++) {
+                const y = 1 - (i / (numPoints - 1)) * 2; // y从1到-1
+                const radius = Math.sqrt(1 - y * y); // 半径
+                
+                const theta = phi * i; // 黄金角旋转
+                
+                const x = Math.cos(theta) * radius;
+                const z = Math.sin(theta) * radius;
+                
+                // 将点缩放到所需的几何体尺寸
+                const scaledX = x * geometrySize;
+                const scaledY = y * geometrySize;
+                const scaledZ = z * geometrySize;
+                
+                const material = getRandomColor();
+                const mesh = new THREE.Mesh(sphereGeometry, material);
+                mesh.position.set(scaledX, scaledY, scaledZ);
+                // 设置所有粒子为相同的旋转
+                mesh.rotation.set(0, 0, 0);
+                scene.add(mesh);
+                particles.push(mesh);
+            }
+        }
+
+        // 在立方体顶点上生成粒子
+        function createCubicDistribution() {
+            clearParticles();
+            currentDistribution = 'cube';
+            
+            // 创建一个方盒几何体，参数为长度、宽度、高度和分段数
+            const size = geometrySize;
+            const segments = geometryResolution;
+            const geometry = new THREE.BoxGeometry(size, size, size, segments, segments, segments);
+            
+            // 获取几何体的顶点
+            const vertices = geometry.attributes.position.array;
+            
+            // 在每个顶点创建一个小球
+            for (let i = 0; i < vertices.length; i += 3) {
+                const x = vertices[i];
+                const y = vertices[i + 1];
+                const z = vertices[i + 2];
+                
+                const material = getRandomColor();
+                const mesh = new THREE.Mesh(sphereGeometry, material);
+                mesh.position.set(x, y, z);
+                // 设置所有粒子为相同的旋转
+                mesh.rotation.set(0, 0, 0);
+                scene.add(mesh);
+                particles.push(mesh);
+            }
+        }
+
+        // 在环面顶点上生成粒子
+        function createTorusDistribution() {
+            clearParticles();
+            currentDistribution = 'torus';
+            
+            // 创建环面几何体，参数为环半径、管径、径向分段、管周分段
+            const radius = geometrySize;
+            const tube = geometrySize * 0.3;
+            const radialSegments = geometryResolution;
+            const tubularSegments = geometryResolution * 2;
+            const geometry = new THREE.TorusGeometry(radius, tube, radialSegments, tubularSegments);
+            
+            // 获取几何体的顶点
+            const vertices = geometry.attributes.position.array;
+            
+            // 在每个顶点创建一个小球
+            for (let i = 0; i < vertices.length; i += 3) {
+                const x = vertices[i];
+                const y = vertices[i + 1];
+                const z = vertices[i + 2];
+                
+                const material = getRandomColor();
+                const mesh = new THREE.Mesh(sphereGeometry, material);
+                mesh.position.set(x, y, z);
+                scene.add(mesh);
+                particles.push(mesh);
+            }
+        }
+
+        // 在圆柱体边缘上生成粒子
+        function createCylinderDistribution() {
+            clearParticles();
+            currentDistribution = 'cylinder';
+            
+            // 创建圆柱体几何体，参数为顶部半径、底部半径、高度、径向分段、高度分段
+            const radiusTop = geometrySize * 0.5;
+            const radiusBottom = geometrySize * 0.5;
+            const height = geometrySize * 1.5;
+            const radialSegments = geometryResolution;
+            const heightSegments = Math.max(1, Math.floor(geometryResolution / 2));
+            const geometry = new THREE.CylinderGeometry(
+                radiusTop, radiusBottom, height, radialSegments, heightSegments
+            );
+            
+            // 获取圆柱体的顶点和索引
+            const vertices = geometry.attributes.position.array;
+            let edgePositions = [];
+            
+            // 根据高度分段计算圆环
+            const rings = heightSegments + 1;
+            const pointsPerRing = radialSegments;
+            
+            // 生成顶部和底部圆环的点
+            for (let ring = 0; ring < rings; ring += heightSegments) {
+                // 只处理第一个和最后一个圆环（顶部和底部）
+                const y = ring === 0 ? height / 2 : -height / 2;
+                
+                for (let i = 0; i < pointsPerRing; i++) {
+                    const angle = (i / pointsPerRing) * Math.PI * 2;
+                    const x = Math.cos(angle) * radiusTop;
+                    const z = Math.sin(angle) * radiusTop;
+                    
+                    edgePositions.push(x, y, z);
+                }
+            }
+            
+            // 生成侧面垂直边缘的点
+            for (let i = 0; i < pointsPerRing; i++) {
+                const angle = (i / pointsPerRing) * Math.PI * 2;
+                const x = Math.cos(angle) * radiusTop;
+                const z = Math.sin(angle) * radiusTop;
+                
+                // 上顶点已经添加，这里添加中间的点
+                const segmentCount = Math.max(2, heightSegments - 1);
+                for (let j = 1; j < segmentCount; j++) {
+                    const t = j / segmentCount;
+                    const y = height / 2 - height * t;
+                    edgePositions.push(x, y, z);
+                }
+                // 下顶点已经添加，不需要再添加
+            }
+            
+            // 在边缘点上创建小球
+            for (let i = 0; i < edgePositions.length; i += 3) {
+                const x = edgePositions[i];
+                const y = edgePositions[i + 1];
+                const z = edgePositions[i + 2];
+                
+                const material = getRandomColor();
+                const mesh = new THREE.Mesh(sphereGeometry, material);
+                mesh.position.set(x, y, z);
+                scene.add(mesh);
+                particles.push(mesh);
+            }
+        }
+
+        // 在三棱锥形状上生成粒子
+        function createConeDistribution() {
+            clearParticles();
+            currentDistribution = 'cone';
+            
+            // 几何参数
+            const height = geometrySize * 1.5;
+            const sideLength = geometrySize * 1.2; // 底面边长
+            
+            // 创建顶点：三棱锥有4个顶点，底面是等边三角形
+            // 底面三个顶点，在XZ平面上
+            const bottomY = -height/2;
+            const vertices = [];
+            
+            // 计算等边三角形的半径
+            const radius = (sideLength / Math.sqrt(3));
+            
+            // 底面三个顶点
+            for (let i = 0; i < 3; i++) {
+                const angle = (i * Math.PI * 2 / 3);
+                const x = radius * Math.cos(angle);
+                const z = radius * Math.sin(angle);
+                vertices.push(new THREE.Vector3(x, bottomY, z));
+            }
+            
+            // 顶点
+            const topVertex = new THREE.Vector3(0, height/2, 0);
+            vertices.push(topVertex);
+            
+            // 创建边缘线的点
+            const edgePoints = [];
+            
+            // 从顶点到底面每个顶点的边
+            for (let i = 0; i < 3; i++) {
+                const bottomVertex = vertices[i];
+                const segments = Math.max(5, geometryResolution);
+                
+                for (let j = 0; j <= segments; j++) {
+                    const t = j / segments;
+                    const x = topVertex.x * (1-t) + bottomVertex.x * t;
+                    const y = topVertex.y * (1-t) + bottomVertex.y * t;
+                    const z = topVertex.z * (1-t) + bottomVertex.z * t;
+                    
+                    edgePoints.push(new THREE.Vector3(x, y, z));
+                }
+            }
+            
+            // 底面的边
+            for (let i = 0; i < 3; i++) {
+                const v1 = vertices[i];
+                const v2 = vertices[(i + 1) % 3];
+                const segments = Math.max(5, geometryResolution);
+                
+                for (let j = 0; j <= segments; j++) {
+                    const t = j / segments;
+                    const x = v1.x * (1-t) + v2.x * t;
+                    const y = bottomY;
+                    const z = v1.z * (1-t) + v2.z * t;
+                    
+                    edgePoints.push(new THREE.Vector3(x, y, z));
+                }
+            }
+            
+            // 为了更好地显示面，添加面上的点（使用网格而非随机点）
+            const facePoints = [];
+            
+            // 每个侧面是一个三角形，使用网格状分布
+            for (let i = 0; i < 3; i++) {
+                const v1 = topVertex;
+                const v2 = vertices[i];
+                const v3 = vertices[(i + 1) % 3];
+                
+                // 在每个面上生成网格状的点
+                const segments = Math.max(4, Math.floor(geometryResolution / 3));
+                for (let u = 1; u < segments; u++) {
+                    for (let v = 1; v < segments - u; v++) {
+                        // 生成重心坐标 - 使用网格方式
+                        const a = u / segments;
+                        const b = v / segments;
+                        const c = 1 - a - b;
+                        
+                        // 计算点的位置
+                        const x = a * v1.x + b * v2.x + c * v3.x;
+                        const y = a * v1.y + b * v2.y + c * v3.y;
+                        const z = a * v1.z + b * v2.z + c * v3.z;
+                        
+                        facePoints.push(new THREE.Vector3(x, y, z));
+                    }
+                }
+            }
+            
+            // 底面也生成网格状的点
+            const segments = Math.max(6, geometryResolution / 2);
+            for (let u = 1; u < segments; u++) {
+                for (let v = 1; v < segments - u; v++) {
+                    // 生成重心坐标 - 使用网格方式
+                    const a = u / segments;
+                    const b = v / segments;
+                    const c = 1 - a - b;
+                    
+                    // 计算点的位置
+                    const x = a * vertices[0].x + b * vertices[1].x + c * vertices[2].x;
+                    const y = bottomY;
+                    const z = a * vertices[0].z + b * vertices[1].z + c * vertices[2].z;
+                    
+                    facePoints.push(new THREE.Vector3(x, y, z));
+                }
+            }
+            
+            // 合并所有点
+            const allPoints = [...vertices, ...edgePoints, ...facePoints];
+            
+            // 创建小球
+            for (const point of allPoints) {
+                const material = getRandomColor();
+                const mesh = new THREE.Mesh(sphereGeometry, material);
+                mesh.position.copy(point);
+                // 设置所有粒子为相同的旋转
+                mesh.rotation.set(0, 0, 0);
+                scene.add(mesh);
+                particles.push(mesh);
+            }
+        }
+
+        // 创建六棱柱分布
+        function createHexPrismDistribution() {
+            clearParticles();
+            currentDistribution = 'hexprism';
+            
+            // 创建一个六棱柱几何体
+            const radius = geometrySize * 0.8;
+            const height = geometrySize * 1.5;
+            
+            // 使用更多分段创建几何体以获得更均匀的分布
+            const radialSegments = 6; // 固定为6个面
+            const heightSegments = Math.max(1, Math.ceil(geometryResolution / 4)); // 高度分段
+            const geometry = new THREE.CylinderGeometry(radius, radius, height, radialSegments, heightSegments);
+            
+            // 获取几何体的顶点
+            const vertices = geometry.attributes.position.array;
+            
+            // 获取唯一顶点（消除重复点）
+            const uniqueVertices = new Set();
+            const points = [];
+            
+            for (let i = 0; i < vertices.length; i += 3) {
+                const x = vertices[i];
+                const y = vertices[i + 1];
+                const z = vertices[i + 2];
+                
+                // 创建一个唯一键，对坐标进行轻微四舍五入以处理浮点精度问题
+                const key = `${Math.round(x*1000)/1000},${Math.round(y*1000)/1000},${Math.round(z*1000)/1000}`;
+                
+                if (!uniqueVertices.has(key)) {
+                    uniqueVertices.add(key);
+                    points.push({ x, y, z });
+                }
+            }
+            
+            // 生成表面上的附加点以获得更均匀的分布
+            // 为每个面生成额外的点
+            const extraPoints = [];
+            
+            // 侧面平面 - 每个六边形面
+            for (let side = 0; side < radialSegments; side++) {
+                const angle1 = (side / radialSegments) * Math.PI * 2;
+                const angle2 = ((side + 1) / radialSegments) * Math.PI * 2;
+                
+                const x1 = Math.cos(angle1) * radius;
+                const z1 = Math.sin(angle1) * radius;
+                
+                const x2 = Math.cos(angle2) * radius;
+                const z2 = Math.sin(angle2) * radius;
+                
+                // 为每个侧面添加额外的点
+                const segments = Math.max(3, Math.ceil(geometryResolution / 3));
+                for (let i = 1; i < segments; i++) {
+                    for (let j = 1; j < segments; j++) {
+                        const tx = i / segments;
+                        const ty = j / segments;
+                        
+                        // 插值计算面上的点
+                        const x = x1 * (1 - tx) + x2 * tx;
+                        const z = z1 * (1 - tx) + z2 * tx;
+                        const y = height/2 - height * ty;
+                        
+                        // 调整到表面
+                        const distToCenter = Math.sqrt(x*x + z*z);
+                        const adjustedX = x / distToCenter * radius;
+                        const adjustedZ = z / distToCenter * radius;
+                        
+                        extraPoints.push({ x: adjustedX, y, z: adjustedZ });
+                    }
+                }
+            }
+            
+            // 顶面和底面 - 每个是六边形
+            for (const topBottom of [-1, 1]) {
+                const y = topBottom * height/2;
+                
+                // 添加中心点
+                extraPoints.push({ x: 0, y, z: 0 });
+                
+                // 在顶面/底面添加更多点
+                const segments = Math.max(2, Math.ceil(geometryResolution / 5));
+                for (let i = 1; i < segments; i++) {
+                    const r = radius * (i / segments);
+                    
+                    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / (3 * i)) {
+                        const x = Math.cos(angle) * r;
+                        const z = Math.sin(angle) * r;
+                        extraPoints.push({ x, y, z });
+                    }
+                }
+            }
+            
+            // 合并所有点并创建粒子
+            const allPoints = [...points, ...extraPoints];
+            
+            // 在所有点上创建小球
+            for (const point of allPoints) {
+                const material = getRandomColor();
+                const mesh = new THREE.Mesh(sphereGeometry, material);
+                mesh.position.set(point.x, point.y, point.z);
+                // 设置所有粒子为相同的旋转
+                mesh.rotation.set(0, 0, 0);
+                scene.add(mesh);
+                particles.push(mesh);
+            }
+        }
+
+        // 创建圆锥分布
+        function createCircularConeDistribution() {
+            clearParticles();
+            currentDistribution = 'circular-cone';
+            
+            // 创建一个圆锥几何体
+            const radius = geometrySize * 0.8;
+            const height = geometrySize * 1.5;
+            
+            // 创建自定义几何体，使用更多分段以获得更平滑的圆锥
+            const geometry = new THREE.ConeGeometry(radius, height, geometryResolution, geometryResolution / 2);
+            
+            // 获取几何体的顶点
+            const vertices = geometry.attributes.position.array;
+            
+            // 在每个顶点创建一个小球
+            for (let i = 0; i < vertices.length; i += 3) {
+                const x = vertices[i];
+                const y = vertices[i + 1];
+                const z = vertices[i + 2];
+                
+                const material = getRandomColor();
+                const mesh = new THREE.Mesh(sphereGeometry, material);
+                mesh.position.set(x, y, z);
+                // 设置所有粒子为相同的旋转
+                mesh.rotation.set(0, 0, 0);
+                scene.add(mesh);
+                particles.push(mesh);
+            }
+        }
+
+        // 创建三棱柱分布
+        function createTriangularPrismDistribution() {
+            clearParticles();
+            currentDistribution = 'triangular-prism';
+            
+            // 几何参数
+            const height = geometrySize * 1.5;
+            const sideLength = geometrySize * 1.2; // 三角形边长
+            
+            // 计算等边三角形的半径
+            const radius = (sideLength / Math.sqrt(3));
+            
+            // 创建顶点：三棱柱有6个顶点，上下各三个
+            const vertices = [];
+            
+            // 底面三个顶点（在XZ平面上）
+            const bottomY = -height/2;
+            for (let i = 0; i < 3; i++) {
+                const angle = (i * Math.PI * 2 / 3);
+                const x = radius * Math.cos(angle);
+                const z = radius * Math.sin(angle);
+                vertices.push(new THREE.Vector3(x, bottomY, z));
+            }
+            
+            // 顶面三个顶点（在XZ平面上）
+            const topY = height/2;
+            for (let i = 0; i < 3; i++) {
+                const angle = (i * Math.PI * 2 / 3);
+                const x = radius * Math.cos(angle);
+                const z = radius * Math.sin(angle);
+                vertices.push(new THREE.Vector3(x, topY, z));
+            }
+            
+            // 创建边缘线的点
+            const edgePoints = [];
+            
+            // 底面三角形的边
+            for (let i = 0; i < 3; i++) {
+                const v1 = vertices[i];
+                const v2 = vertices[(i + 1) % 3];
+                const segments = Math.max(5, geometryResolution);
+                
+                for (let j = 0; j <= segments; j++) {
+                    const t = j / segments;
+                    const x = v1.x * (1-t) + v2.x * t;
+                    const y = bottomY;
+                    const z = v1.z * (1-t) + v2.z * t;
+                    
+                    edgePoints.push(new THREE.Vector3(x, y, z));
+                }
+            }
+            
+            // 顶面三角形的边
+            for (let i = 0; i < 3; i++) {
+                const v1 = vertices[i + 3];
+                const v2 = vertices[(i + 1) % 3 + 3];
+                const segments = Math.max(5, geometryResolution);
+                
+                for (let j = 0; j <= segments; j++) {
+                    const t = j / segments;
+                    const x = v1.x * (1-t) + v2.x * t;
+                    const y = topY;
+                    const z = v1.z * (1-t) + v2.z * t;
+                    
+                    edgePoints.push(new THREE.Vector3(x, y, z));
+                }
+            }
+            
+            // 侧面的垂直边
+            for (let i = 0; i < 3; i++) {
+                const v1 = vertices[i];
+                const v2 = vertices[i + 3];
+                const segments = Math.max(5, geometryResolution);
+                
+                for (let j = 0; j <= segments; j++) {
+                    const t = j / segments;
+                    const x = v1.x * (1-t) + v2.x * t;
+                    const y = bottomY * (1-t) + topY * t;
+                    const z = v1.z * (1-t) + v2.z * t;
+                    
+                    edgePoints.push(new THREE.Vector3(x, y, z));
+                }
+            }
+            
+            // 为了更好地显示面，添加面上的点
+            const facePoints = [];
+            
+            // 三个矩形侧面 - 使用均匀网格
+            for (let i = 0; i < 3; i++) {
+                const v1 = vertices[i];
+                const v2 = vertices[(i + 1) % 3];
+                const v3 = vertices[(i + 1) % 3 + 3];
+                const v4 = vertices[i + 3];
+                
+                // 为每个侧面生成网格状的点
+                const uSegments = Math.max(5, Math.floor(geometryResolution / 2));
+                const vSegments = Math.max(5, Math.floor(geometryResolution / 2));
+                
+                for (let u = 1; u < uSegments; u++) {
+                    for (let v = 1; v < vSegments; v++) {
+                        const uCoord = u / uSegments;
+                        const vCoord = v / vSegments;
+                        
+                        // 在矩形侧面上使用简单的双线性插值
+                        const x = (1 - uCoord) * (1 - vCoord) * v1.x + uCoord * (1 - vCoord) * v2.x + 
+                                  uCoord * vCoord * v3.x + (1 - uCoord) * vCoord * v4.x;
+                        const y = (1 - uCoord) * (1 - vCoord) * v1.y + uCoord * (1 - vCoord) * v2.y + 
+                                  uCoord * vCoord * v3.y + (1 - uCoord) * vCoord * v4.y;
+                        const z = (1 - uCoord) * (1 - vCoord) * v1.z + uCoord * (1 - vCoord) * v2.z + 
+                                  uCoord * vCoord * v3.z + (1 - uCoord) * vCoord * v4.z;
+                        
+                        facePoints.push(new THREE.Vector3(x, y, z));
+                    }
+                }
+            }
+            
+            // 底面和顶面（三角形） - 使用网格状点分布
+            for (let face = 0; face < 2; face++) {
+                const faceVertices = face === 0 
+                    ? [vertices[0], vertices[1], vertices[2]] // 底面
+                    : [vertices[3], vertices[4], vertices[5]]; // 顶面
+                
+                const y = face === 0 ? bottomY : topY;
+                
+                // 使用网格生成点
+                const segments = Math.max(6, geometryResolution / 2);
+                for (let u = 1; u < segments; u++) {
+                    for (let v = 1; v < segments - u; v++) {
+                        // 生成重心坐标 - 使用网格方式
+                        const a = u / segments;
+                        const b = v / segments;
+                        const c = 1 - a - b;
+                        
+                        // 计算点的位置
+                        const x = a * faceVertices[0].x + b * faceVertices[1].x + c * faceVertices[2].x;
+                        const z = a * faceVertices[0].z + b * faceVertices[1].z + c * faceVertices[2].z;
+                        
+                        facePoints.push(new THREE.Vector3(x, y, z));
+                    }
+                }
+            }
+            
+            // 合并所有点
+            const allPoints = [...vertices, ...edgePoints, ...facePoints];
+            
+            // 创建小球
+            for (const point of allPoints) {
+                const material = getRandomColor();
+                const mesh = new THREE.Mesh(sphereGeometry, material);
+                mesh.position.copy(point);
+                // 设置所有粒子为相同的旋转
+                mesh.rotation.set(0, 0, 0);
+                scene.add(mesh);
+                particles.push(mesh);
+            }
+        }
+
+        // 重新生成当前分布
+        function regenerateCurrentDistribution() {
+            switch (currentDistribution) {
+                case 'sphere':
+                    createSphericalDistribution();
+                    break;
+                case 'cube':
+                    createCubicDistribution();
+                    break;
+                case 'torus':
+                    createTorusDistribution();
+                    break;
+                case 'cylinder':
+                    createCylinderDistribution();
+                    break;
+                case 'cone':
+                    createConeDistribution();
+                    break;
+                case 'triangular-prism':
+                    createTriangularPrismDistribution();
+                    break;
+                case 'hexprism':
+                    createHexPrismDistribution();
+                    break;
+                case 'circular-cone':
+                    createCircularConeDistribution();
+                    break;
+            }
+        }
+
+        // 设置背景颜色
+        function setBackgroundColor(color, transparent = false) {
+            if (transparent) {
+                renderer.setClearColor(0x000000, 0);
+                // 设置渲染器的alpha参数以确保透明度
+                renderer.alpha = true;
+                document.body.style.background = 'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABZ0RVh0Q3JlYXRpb24gVGltZQAxMC8yOS8xMiKqq3kAAAAcdEVYdFNvZnR3YXJlAEFkb2JlIEZpcmV3b3JrcyBDUzVxteM2AAAAVklEQVQ4jWP8//8/AyWAiYFCQLEBjCgmMKzc+V/L0pSRkBpGmAtgBjDCXQBTjM8AuAtgBsDEcRrw/QMDA0w9XgPQXQBTg9cAZBfANCIb8EPbHrcaigMAp61nA2us2xMAAAAASUVORK5CYII=")';
+                document.body.style.backgroundRepeat = 'repeat';
+            } else {
+                renderer.setClearColor(color, 1);
+                document.body.style.background = color.getStyle();
+            }
+            renderer.render(scene, camera);
+        }
+
+        // 导出PNG图片
+        function exportToPNG() {
+            // 获取当前日期时间作为文件名
+            const date = new Date();
+            const timestamp = date.toISOString().replace(/[:.]/g, '-').replace('T', '_').slice(0, 19);
+            const filename = `molecule_3d_${currentDistribution}_${timestamp}.png`;
+            
+            // 保存当前渲染器的背景设置
+            const currentClearColor = renderer.getClearColor().clone();
+            const currentClearAlpha = renderer.getClearAlpha();
+            
+            // 如果需要透明背景，临时设置渲染器为透明
+            const isTransparent = document.getElementById('transparentBg').checked;
+            if (isTransparent) {
+                renderer.setClearColor(0x000000, 0); // 设置完全透明背景
+                
+                // 为确保透明度被正确处理，先清除画布再渲染
+                renderer.clear();
+            }
+            
+            // 重新渲染一帧以应用新设置
+            renderer.render(scene, camera);
+            
+            // 捕获Canvas数据并创建下载链接
+            try {
+                // 获取Canvas数据URL，确保使用PNG格式并保留透明度
+                const dataURL = renderer.domElement.toDataURL('image/png');
+                
+                // 创建下载链接
+                const link = document.createElement('a');
+                link.href = dataURL;
+                link.download = filename;
+                document.body.appendChild(link); // 添加到DOM以确保在某些浏览器环境下可用
+                link.click();
+                
+                // 延迟移除链接
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                }, 100);
+            } catch (error) {
+                console.error('导出图片时出错:', error);
+                alert('导出图片失败，可能是由于浏览器安全限制。请尝试使用不同的浏览器。');
+            } finally {
+                // 恢复原来的背景设置
+                renderer.setClearColor(currentClearColor, currentClearAlpha);
+                renderer.render(scene, camera);
+            }
+        }
+
+        // 初始化默认为球面分布
+        createSphericalDistribution();
+
+        // 初始化背景设置
+        const initialBgColor = new THREE.Color(document.getElementById('bgColor').value);
+        const initialTransparent = document.getElementById('transparentBg').checked;
+        setBackgroundColor(initialBgColor, initialTransparent);
+
+        // 添加按钮事件监听器
+        document.getElementById('sphere').addEventListener('click', () => createSphericalDistribution());
+        document.getElementById('cube').addEventListener('click', () => createCubicDistribution());
+        document.getElementById('torus').addEventListener('click', () => createTorusDistribution());
+        document.getElementById('cylinder').addEventListener('click', () => createCylinderDistribution());
+        document.getElementById('cone').addEventListener('click', () => createConeDistribution());
+        document.getElementById('hexprism').addEventListener('click', () => createHexPrismDistribution());
+        document.getElementById('circular-cone').addEventListener('click', () => createCircularConeDistribution());
+        document.getElementById('triangular-prism').addEventListener('click', () => createTriangularPrismDistribution());
+
+        // 视图切换
+        document.getElementById('orthographic').addEventListener('click', () => switchCamera(true));
+        document.getElementById('perspective').addEventListener('click', () => switchCamera(false));
+
+        // 布线密度控制
+        const densitySlider = document.getElementById('density');
+        const densityValue = document.getElementById('densityValue');
+        densitySlider.addEventListener('input', (e) => {
+            geometryResolution = parseInt(e.target.value);
+            densityValue.textContent = geometryResolution;
+            regenerateCurrentDistribution();
+        });
+
+        // 小球大小控制
+        const particleSizeSlider = document.getElementById('particleSizeSlider');
+        const sizeValue = document.getElementById('particleSizeValue');
+        particleSizeSlider.addEventListener('input', (e) => {
+            particleSize = parseFloat(e.target.value);
+            sizeValue.textContent = particleSize.toFixed(2);
+            updateSphereGeometry();
+            regenerateCurrentDistribution();
+        });
+
+        // 几何体尺寸控制
+        const geometrySizeSlider = document.getElementById('geometrySizeSlider');
+        const sizeValueGeo = document.getElementById('geometrySizeValue');
+        geometrySizeSlider.addEventListener('input', (e) => {
+            geometrySize = parseFloat(e.target.value);
+            sizeValueGeo.textContent = geometrySize.toString();
+            regenerateCurrentDistribution();
+        });
+
+        // 背景颜色控制
+        const bgColorInput = document.getElementById('bgColor');
+        bgColorInput.addEventListener('input', (e) => {
+            const color = new THREE.Color(e.target.value);
+            const isTransparent = document.getElementById('transparentBg').checked;
+            setBackgroundColor(color, isTransparent);
+            
+            // 更新body背景色以便显示透明效果
+            if (!isTransparent) {
+                document.body.style.background = e.target.value;
+            }
+            
+            renderer.render(scene, camera);
+        });
+
+        // 透明背景开关
+        const transparentBgCheckbox = document.getElementById('transparentBg');
+        transparentBgCheckbox.addEventListener('change', (e) => {
+            const bgColor = new THREE.Color(bgColorInput.value);
+            
+            if (e.target.checked) {
+                // 设置透明背景
+                renderer.setClearColor(0x000000, 0);
+                document.body.style.background = 'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABZ0RVh0Q3JlYXRpb24gVGltZQAxMC8yOS8xMiKqq3kAAAAcdEVYdFNvZnR3YXJlAEFkb2JlIEZpcmV3b3JrcyBDUzVxteM2AAAAVklEQVQ4jWP8//8/AyWAiYFCQLEBjCgmMKzc+V/L0pSRkBpGmAtgBjDCXQBTjM8AuAtgBsDEcRrw/QMDA0w9XgPQXQBTg9cAZBfANCIb8EPbHrcaigMAp61nA2us2xMAAAAASUVORK5CYII=")';
+                document.body.style.backgroundRepeat = 'repeat';
+            } else {
+                // 恢复背景颜色
+                renderer.setClearColor(bgColor, 1);
+                document.body.style.background = bgColor.getStyle();
+            }
+            
+            // 重新渲染场景
+            renderer.render(scene, camera);
+        });
+
+        // 导出PNG
+        document.getElementById('exportPNG').addEventListener('click', exportToPNG);
+
+        // 添加窗口大小调整事件监听
+        window.addEventListener('resize', () => {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            // 更新透视相机
+            perspectiveCamera.aspect = width / height;
+            perspectiveCamera.updateProjectionMatrix();
+            
+            // 更新正交相机
+            const aspect = width / height;
+            orthographicCamera.left = frustumSize * aspect / -2;
+            orthographicCamera.right = frustumSize * aspect / 2;
+            orthographicCamera.top = frustumSize / 2;
+            orthographicCamera.bottom = frustumSize / -2;
+            orthographicCamera.updateProjectionMatrix();
+            
+            renderer.setSize(width, height);
+        });
+
+        // 光照亮度控制
+        const mainLightSlider = document.getElementById('mainLight');
+        const mainLightValue = document.getElementById('mainLightValue');
+        mainLightSlider.addEventListener('input', (e) => {
+            const intensity = parseFloat(e.target.value);
+            mainLightValue.textContent = intensity.toFixed(1);
+            directionalLight.intensity = intensity;
+            renderer.render(scene, camera);
+        });
+        
+        const ambientLightSlider = document.getElementById('ambientLight');
+        const ambientLightValue = document.getElementById('ambientLightValue');
+        ambientLightSlider.addEventListener('input', (e) => {
+            const intensity = parseFloat(e.target.value);
+            ambientLightValue.textContent = intensity.toFixed(1);
+            ambientLight.intensity = intensity;
+            renderer.render(scene, camera);
+        });
+
+        // 小球颜色选择
+        const customColorInput = document.getElementById('customColor');
+        customColorInput.addEventListener('input', (e) => {
+            customColorValue = e.target.value;
+            regenerateCurrentDistribution();
+        });
+
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // 视图方向切换
+        function setCameraView(viewType) {
+            // 重置相机位置
+            if (viewType === 'front') {
+                // 正视图 (Z轴方向)
+                camera.position.set(0, 0, 20);
+                camera.rotation.set(0, 0, 0);
+            } else if (viewType === 'side') {
+                // 侧视图 (X轴方向)
+                camera.position.set(20, 0, 0);
+                camera.rotation.set(0, Math.PI / 2, 0);
+            } else if (viewType === 'top') {
+                // 俯视图 (Y轴方向)
+                camera.position.set(0, 20, 0);
+                camera.rotation.set(Math.PI / 2, 0, 0);
+            }
+            
+            // 重置控制器
+            controls.reset();
+            
+            // 重新渲染
+            renderer.render(scene, camera);
+        }
+
+        // 视图切换按钮事件监听
+        document.getElementById('front-view').addEventListener('click', () => setCameraView('front'));
+        document.getElementById('side-view').addEventListener('click', () => setCameraView('side'));
+        document.getElementById('top-view').addEventListener('click', () => setCameraView('top'));
+    </script>
+</body>
+</html> 

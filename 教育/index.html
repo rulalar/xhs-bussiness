@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>静态波浪线效果</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+      background-color: #f0f0f0;
+      display: flex;
+      flex-direction: row-reverse;
+    }
+    
+    .controls {
+      width: 250px;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 15px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      height: 100vh;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    
+    .container {
+      flex-grow: 1;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .canvas-container {
+      position: relative;
+      width: 800px;
+      height: 450px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    #background-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #FFF2D9;
+      z-index: -10;
+      border-radius: 8px;
+    }
+    
+    #wave-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+    
+    .control-group {
+      margin-bottom: 12px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    
+    input[type="color"] {
+      width: 40px;
+      height: 30px;
+      border: none;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+    
+    input[type="text"], input[type="number"] {
+      width: 70px;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    input[type="range"] {
+      width: 100%;
+      margin: 5px 0;
+      -webkit-appearance: none;
+      height: 6px;
+      background: #ddd;
+      border-radius: 3px;
+      outline: none;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #2196F3; /* 蓝色滑块 */
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: #2196F3; /* 蓝色滑块 */
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .color-boxes {
+      display: flex;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      gap: 10px;
+      justify-content: space-between;
+    }
+    
+    .color-box {
+      width: 38px;
+      height: 38px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      position: relative;
+    }
+    
+    .color-box.selected {
+      border: 2px solid #333;
+    }
+    
+    .color-editor {
+      margin-bottom: 15px;
+    }
+    
+    .color-label {
+      margin-bottom: 5px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    
+    .color-picker-row {
+      display: flex;
+      align-items: center;
+      margin-top: 8px;
+    }
+    
+    .color-picker-row input[type="color"] {
+      margin-right: 5px;
+    }
+    
+    .toggle-controls {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background-color: #333; /* 黑色按钮 */
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 15px;
+      cursor: pointer;
+      z-index: 15;
+      display: none;
+    }
+    
+    .settings-title {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    
+    .hide-controls {
+      background-color: #333; /* 黑色按钮 */
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+      margin-top: 10px;
+      width: 100%;
+    }
+    
+    .info {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      z-index: 10;
+    }
+    
+    .compact-controls h4 {
+      margin: 12px 0 5px 0;
+      padding-top: 8px;
+      border-top: 1px solid #ddd;
+      font-size: 14px;
+    }
+    
+    .value-display {
+      float: right;
+      font-weight: normal;
+      color: #555;
+    }
+    
+    .export-buttons {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+    }
+    
+    .export-button {
+      flex: 1;
+      background-color: #333; /* 黑色按钮 */
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 0;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+    
+    .export-button:hover {
+      background-color: #555; /* 黑色按钮悬停效果 */
+    }
+    
+    .transparent-bg-option {
+      display: flex;
+      align-items: center;
+      margin-top: 8px;
+      margin-bottom: 15px;
+    }
+    
+    .transparent-bg-option input {
+      margin-right: 8px;
+    }
+    
+    .number-input {
+      width: 70px;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      text-align: center;
+    }
+    
+    input[type="number"]::-webkit-inner-spin-button, 
+    input[type="number"]::-webkit-outer-spin-button { 
+      opacity: 1;
+      height: 24px;
+    }
+  </style>
+</head>
+<body>
+  <!-- 控制面板切换按钮 -->
+  <button class="toggle-controls" id="toggle-controls">显示控制面板</button>
+  
+  <!-- 控制面板 -->
+  <div class="controls" id="controls-panel">
+    <h3 class="settings-title">波浪线设置</h3>
+    
+    <div class="control-group">
+      <label for="bg-color">背景颜色:</label>
+      <input type="color" id="bg-color" value="#FFF2D9">
+      <input type="text" id="bg-color-text" value="#FFF2D9" style="width: 70px;">
+    </div>
+    
+    <div class="control-group">
+      <label for="canvas-width-input">画布宽度:</label>
+      <input type="number" id="canvas-width-input" min="300" max="2000" value="800" class="number-input">
+    </div>
+    
+    <div class="control-group">
+      <label for="canvas-height-input">画布高度:</label>
+      <input type="number" id="canvas-height-input" min="200" max="1200" value="450" class="number-input">
+    </div>
+    
+    <div class="transparent-bg-option">
+      <input type="checkbox" id="transparent-bg">
+      <label for="transparent-bg">透明背景</label>
+    </div>
+    
+    <div class="export-buttons">
+      <button class="export-button" id="export-png">导出PNG</button>
+      <button class="export-button" id="export-svg">导出SVG</button>
+    </div>
+    
+    <div class="compact-controls">
+      <h4>基本设置</h4>
+      
+      <div class="control-group">
+        <label for="line-count-input">波浪线数量:</label>
+        <input type="number" id="line-count-input" min="1" max="500" value="5" class="number-input">
+      </div>
+      
+      <div class="control-group">
+        <label for="line-spacing-slider">波浪线间距: <span class="value-display" id="line-spacing-value">20</span></label>
+        <input type="range" id="line-spacing-slider" min="5" max="50" value="20">
+      </div>
+      
+      <div class="control-group">
+        <label for="line-width-slider">线条粗细: <span class="value-display" id="line-width-value">3</span>px</label>
+        <input type="range" id="line-width-slider" min="1" max="10" value="3">
+      </div>
+      
+      <div class="control-group">
+        <label for="wave-count-slider">波浪数量: <span class="value-display" id="wave-count-value">3</span></label>
+        <input type="range" id="wave-count-slider" min="1" max="10" value="3">
+      </div>
+      
+      <h4>波浪属性</h4>
+      
+      <div class="control-group">
+        <label for="wave-amplitude-slider">波浪幅度: <span class="value-display" id="wave-amplitude-value">50</span></label>
+        <input type="range" id="wave-amplitude-slider" min="10" max="300" value="50">
+      </div>
+      
+      <div class="control-group">
+        <label for="left-amplitude-slider">左侧波浪幅度: <span class="value-display" id="left-amplitude-value">50</span></label>
+        <input type="range" id="left-amplitude-slider" min="0" max="300" value="50">
+      </div>
+      
+      <div class="control-group">
+        <label for="right-amplitude-slider">右侧波浪幅度: <span class="value-display" id="right-amplitude-value">50</span></label>
+        <input type="range" id="right-amplitude-slider" min="0" max="300" value="50">
+      </div>
+      
+      <div class="control-group">
+        <label for="wave-randomness-input">随机起伏:</label>
+        <input type="number" id="wave-randomness-input" min="0" max="100" value="30" class="number-input">
+      </div>
+      
+      <div class="control-group">
+        <label for="color-seed-input">颜色随机种子:</label>
+        <input type="number" id="color-seed-input" min="0" max="1000" value="123" class="number-input">
+      </div>
+      
+      <h4>自定义颜色</h4>
+      
+      <div class="color-editor">
+        <div class="color-label">线条颜色:</div>
+        <div class="color-boxes">
+          <div class="color-box" style="background-color: #67B036;" id="color-box-0"></div>
+          <div class="color-box" style="background-color: #FB853C;" id="color-box-1"></div>
+          <div class="color-box" style="background-color: #8ADEFF;" id="color-box-2"></div>
+          <div class="color-box" style="background-color: #5651E6;" id="color-box-3"></div>
+          <div class="color-box" style="background-color: #FFCB39;" id="color-box-4"></div>
+        </div>
+        <div class="color-picker-row">
+          <input type="color" id="color-picker" value="#67B036">
+          <span>选择颜色后点击上方方块应用</span>
+        </div>
+      </div>
+    </div>
+    
+    <button class="hide-controls" id="hide-controls">隐藏控制面板</button>
+  </div>
+
+  <div class="container">
+    <div class="canvas-container">
+      <!-- 背景画布 -->
+      <div id="background-canvas"></div>
+      
+      <!-- 波浪线画布 -->
+      <canvas id="wave-canvas"></canvas>
+    </div>
+  </div>
+
+  <!-- 信息提示 -->
+  <div class="info">
+    导出PNG和SVG均支持透明背景
+  </div>
+
+  <script>
+    // 预定义颜色
+    const COLORS = [
+      '#67B036', // 绿色
+      '#FB853C', // 橙色
+      '#8ADEFF', // 淡蓝色
+      '#5651E6', // 蓝紫色
+      '#FFCB39'  // 黄色
+    ];
+    
+    // 获取DOM元素
+    const backgroundCanvas = document.getElementById('background-canvas');
+    const canvas = document.getElementById('wave-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    const colorPicker = document.getElementById('bg-color');
+    const colorText = document.getElementById('bg-color-text');
+    const canvasWidthInput = document.getElementById('canvas-width-input');
+    const canvasHeightInput = document.getElementById('canvas-height-input');
+    const transparentBgCheckbox = document.getElementById('transparent-bg');
+    const exportPngButton = document.getElementById('export-png');
+    const exportSvgButton = document.getElementById('export-svg');
+    const lineCountInput = document.getElementById('line-count-input');
+    const lineSpacingSlider = document.getElementById('line-spacing-slider');
+    const lineSpacingValue = document.getElementById('line-spacing-value');
+    const lineWidthSlider = document.getElementById('line-width-slider');
+    const lineWidthValue = document.getElementById('line-width-value');
+    const waveCountSlider = document.getElementById('wave-count-slider');
+    const waveCountValue = document.getElementById('wave-count-value');
+    const waveAmplitudeSlider = document.getElementById('wave-amplitude-slider');
+    const waveAmplitudeValue = document.getElementById('wave-amplitude-value');
+    const leftAmplitudeSlider = document.getElementById('left-amplitude-slider');
+    const leftAmplitudeValue = document.getElementById('left-amplitude-value');
+    const rightAmplitudeSlider = document.getElementById('right-amplitude-slider');
+    const rightAmplitudeValue = document.getElementById('right-amplitude-value');
+    const waveRandomnessInput = document.getElementById('wave-randomness-input');
+    const colorSeedInput = document.getElementById('color-seed-input');
+    
+    // 颜色编辑器
+    const customColorPicker = document.getElementById('color-picker');
+    const colorBoxes = Array.from({length: 5}, (_, i) => document.getElementById(`color-box-${i}`));
+    
+    const controlsPanel = document.getElementById('controls-panel');
+    const hideButton = document.getElementById('hide-controls');
+    const toggleButton = document.getElementById('toggle-controls');
+    
+    // 设置画布尺寸
+    canvas.width = 800;
+    canvas.height = 450;
+    
+    // 平面场景参数
+    let lines = [];
+    let lineCount = 5;
+    let lineWidth = 3;
+    let waveCount = 3;
+    let lineSpacing = 20;
+    let waveAmplitude = 50;
+    let leftAmplitude = 50;
+    let rightAmplitude = 50;
+    let waveRandomness = 30;
+    let colorSeed = 123;
+    let lineSettings = [];
+    
+    // 当前选中的颜色框
+    let selectedColorBoxIndex = 0;
+    
+    // 设置颜色选择器和颜色显示
+    function setupColorPicker() {
+      // 设置初始选中状态
+      colorBoxes[0].classList.add('selected');
+      customColorPicker.value = COLORS[0];
+      
+      // 为颜色框添加点击事件
+      colorBoxes.forEach((box, index) => {
+        box.addEventListener('click', function() {
+          // 更新选中状态
+          colorBoxes.forEach(b => b.classList.remove('selected'));
+          box.classList.add('selected');
+          selectedColorBoxIndex = index;
+          
+          // 更新颜色选择器的值
+          customColorPicker.value = COLORS[index];
+        });
+      });
+      
+      // 颜色选择器变化事件
+      customColorPicker.addEventListener('input', function() {
+        const color = this.value;
+        colorBoxes[selectedColorBoxIndex].style.backgroundColor = color;
+        COLORS[selectedColorBoxIndex] = color;
+        
+        // 更新线条
+        updateLineColors();
+        draw();
+      });
+    }
+    
+    // 更新线条颜色
+    function updateLineColors() {
+      for (let i = 0; i < lineSettings.length; i++) {
+        // 使用种子生成颜色索引
+        const rand = seededRandom(colorSeed + i * 100);
+        const colorIndex = Math.floor(rand * COLORS.length);
+        lineSettings[i].color = COLORS[colorIndex];
+      }
+    }
+    
+    // 简单的伪随机数生成器
+    function seededRandom(seed) {
+      let value = Math.sin(seed) * 10000;
+      return value - Math.floor(value);
+    }
+    
+    // 初始化线条设置
+    function initLineSettings() {
+      lineSettings = [];
+      
+      for (let i = 0; i < lineCount; i++) {
+        // 计算线条粗细
+        const actualWidth = lineWidth;
+        
+        // 使用种子生成颜色索引
+        const rand = seededRandom(colorSeed + i * 100);
+        const colorIndex = Math.floor(rand * COLORS.length);
+        
+        lineSettings.push({
+          color: COLORS[colorIndex],
+          amplitude: waveAmplitude,
+          width: actualWidth,
+          visible: true,
+          controlPoints: generateRandomControlPoints()
+        });
+      }
+    }
+    
+    // 生成随机控制点 (更多控制点让曲线更平滑)
+    function generateRandomControlPoints() {
+      // 根据波浪数量调整控制点
+      const pointCount = 5 + waveCount * 2; // 基础点数加上波浪数量相关的点数
+      const points = [];
+      
+      for (let i = 0; i < pointCount; i++) {
+        const x = i / (pointCount - 1); // 0 到 1 之间的值
+        // 根据随机性参数计算随机值
+        const randomFactor = waveRandomness / 100; // 0-1之间
+        const y = Math.random() * 2 * randomFactor - randomFactor; // 根据随机性参数调整范围
+        points.push({ x, y });
+      }
+      
+      return points;
+    }
+    
+    // 通过控制点计算任意位置的y值（使用三次贝塞尔曲线插值）
+    function getYFromControlPoints(controlPoints, x) {
+      // 确保x在0到1之间
+      x = Math.max(0, Math.min(1, x));
+      
+      // 查找两个最近的控制点
+      let i = 0;
+      while (i < controlPoints.length - 1 && controlPoints[i + 1].x < x) {
+        i++;
+      }
+      
+      // 边界情况处理
+      if (i >= controlPoints.length - 1) {
+        return controlPoints[controlPoints.length - 1].y;
+      }
+      
+      const p0 = i > 0 ? controlPoints[i - 1] : { x: controlPoints[i].x - 0.1, y: controlPoints[i].y };
+      const p1 = controlPoints[i];
+      const p2 = controlPoints[i + 1];
+      const p3 = i < controlPoints.length - 2 ? controlPoints[i + 2] : { x: p2.x + 0.1, y: p2.y };
+      
+      // 计算参数t (0到1之间)
+      const t = (x - p1.x) / (p2.x - p1.x);
+      
+      // 卡特莫尔-罗姆插值 (平滑曲线)
+      const t2 = t * t;
+      const t3 = t2 * t;
+      
+      // 张力参数 (0.5较为平滑)
+      const tension = 0.5;
+      
+      // 计算平滑的y值
+      const y = 
+        (2 * t3 - 3 * t2 + 1) * p1.y + 
+        (t3 - 2 * t2 + t) * tension * (p2.y - p0.y) +
+        (-2 * t3 + 3 * t2) * p2.y +
+        (t3 - t2) * tension * (p3.y - p1.y);
+        
+      return y;
+    }
+    
+    // 初始化线条
+    function initLines() {
+      lines = [];
+      
+      // 计算线条的间距分布
+      const totalHeight = (lineCount - 1) * lineSpacing;
+      const startY = (canvas.height - totalHeight) / 2;
+      
+      for (let i = 0; i < lineCount; i++) {
+        // 计算每条线的y位置
+        let y = startY + i * lineSpacing;
+        
+        lines.push({
+          y: y,
+          originalY: y, // 保存原始Y位置，用于绘制
+          points: []
+        });
+        
+        // 为每条线创建点，使曲线更平滑
+        const pointCount = 200; // 点的数量
+        for (let j = 0; j < pointCount; j++) {
+          const xPos = j / (pointCount - 1); // 0到1之间的相对位置
+          lines[i].points.push({
+            x: xPos, // 相对位置
+            y: 0     // 初始y为0，后面会更新
+          });
+        }
+      }
+      
+      updateLines();
+    }
+    
+    // 更新波浪线
+    function updateLines() {
+      for (let i = 0; i < lines.length; i++) {
+        if (i >= lineSettings.length) continue;
+        
+        const line = lines[i];
+        const settings = lineSettings[i];
+        const amplitude = settings.amplitude;
+        const controlPoints = settings.controlPoints;
+        
+        for (let j = 0; j < line.points.length; j++) {
+          const point = line.points[j];
+          const xPos = point.x; // 相对位置，0到1
+          
+          // 从控制点获取基础y值
+          let y = getYFromControlPoints(controlPoints, xPos);
+          
+          // 应用振幅
+          point.y = y * amplitude;
+        }
+      }
+    }
+    
+    // 绘制场景
+    function draw() {
+      // 清除画布
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // 绘制每条线
+      for (let i = 0; i < lines.length; i++) {
+        if (i >= lineSettings.length || !lineSettings[i].visible) continue;
+        
+        const line = lines[i];
+        const settings = lineSettings[i];
+        
+        // 设置线条样式
+        ctx.strokeStyle = settings.color;
+        ctx.lineWidth = settings.width;
+        
+        ctx.beginPath();
+        
+        // 绘制线条上的每个点
+        const baseY = line.originalY;
+        for (let j = 0; j < line.points.length; j++) {
+          const point = line.points[j];
+          
+          // 计算左右幅度比例
+          let amplitude = waveAmplitude;
+          if (leftAmplitude !== rightAmplitude) {
+            // 根据x位置加权计算波浪幅度
+            const leftWeight = 1 - point.x; // 左侧权重，从1递减到0
+            const rightWeight = point.x;    // 右侧权重，从0递增到1
+            amplitude = (leftAmplitude * leftWeight + rightAmplitude * rightWeight);
+          }
+          
+          // 应用幅度到波浪
+          const scaledY = point.y * (amplitude / waveAmplitude);
+          
+          // 计算绝对坐标
+          const x = canvas.width * point.x;
+          const y = baseY + scaledY;
+          
+          if (j === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        
+        ctx.stroke();
+      }
+    }
+    
+    // 重新计算线条宽度
+    function recalculateLineWidths() {
+      for (let i = 0; i < lineSettings.length; i++) {
+        lineSettings[i].width = lineWidth;
+      }
+      
+      // 重绘
+      draw();
+    }
+    
+    // 初始化
+    function init() {
+      setupColorPicker();
+      initLineSettings();
+      initLines();
+      draw();
+      
+      // 波浪数量变化
+      waveCountSlider.addEventListener('input', function() {
+        waveCount = parseInt(this.value);
+        waveCountValue.textContent = waveCount;
+        
+        // 重新生成控制点
+        for (let i = 0; i < lineSettings.length; i++) {
+          lineSettings[i].controlPoints = generateRandomControlPoints();
+        }
+        updateLines();
+        draw();
+      });
+      
+      // 设置背景透明度控制
+      transparentBgCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+          backgroundCanvas.style.backgroundColor = 'transparent';
+          colorPicker.disabled = true;
+          colorText.disabled = true;
+        } else {
+          backgroundCanvas.style.backgroundColor = colorPicker.value;
+          colorPicker.disabled = false;
+          colorText.disabled = false;
+        }
+      });
+      
+      // 波浪线数量输入框
+      lineCountInput.addEventListener('change', function() {
+        let value = parseInt(this.value);
+        
+        // 限制范围
+        if (value < 1) value = 1;
+        if (value > 500) value = 500;
+        this.value = value;
+        
+        lineCount = value;
+        
+        // 重新初始化
+        initLineSettings();
+        initLines();
+        draw();
+      });
+      
+      // 画布宽度控制
+      canvasWidthInput.addEventListener('change', function() {
+        let value = parseInt(this.value);
+        
+        // 限制范围
+        if (value < 300) value = 300;
+        if (value > 2000) value = 2000;
+        this.value = value;
+        
+        // 调整画布宽度
+        resizeCanvas(value, canvas.height);
+      });
+      
+      // 画布高度控制
+      canvasHeightInput.addEventListener('change', function() {
+        let value = parseInt(this.value);
+        
+        // 限制范围
+        if (value < 200) value = 200;
+        if (value > 1200) value = 1200;
+        this.value = value;
+        
+        // 调整画布高度
+        resizeCanvas(canvas.width, value);
+      });
+      
+      // 导出PNG
+      exportPngButton.addEventListener('click', exportAsPNG);
+      
+      // 导出SVG
+      exportSvgButton.addEventListener('click', exportAsSVG);
+    }
+    
+    // 调整画布尺寸
+    function resizeCanvas(width, height) {
+      // 更新画布尺寸
+      canvas.width = width;
+      canvas.height = height;
+      
+      // 更新画布容器尺寸
+      const canvasContainer = document.querySelector('.canvas-container');
+      canvasContainer.style.width = width + 'px';
+      canvasContainer.style.height = height + 'px';
+      
+      // 重新初始化线条
+      initLines();
+      draw();
+    }
+    
+    // 背景颜色控制
+    colorPicker.addEventListener('input', function() {
+      const color = this.value;
+      if (!transparentBgCheckbox.checked) {
+        backgroundCanvas.style.backgroundColor = color;
+        colorText.value = color;
+      }
+    });
+    
+    colorText.addEventListener('input', function() {
+      const color = this.value;
+      if(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color)) {
+        if (!transparentBgCheckbox.checked) {
+          backgroundCanvas.style.backgroundColor = color;
+          colorPicker.value = color;
+        }
+      }
+    });
+    
+    // 线条间距控制
+    lineSpacingSlider.addEventListener('input', function() {
+      lineSpacing = parseInt(this.value);
+      lineSpacingValue.textContent = lineSpacing;
+      initLines();
+      draw();
+    });
+    
+    // 线条粗细控制
+    lineWidthSlider.addEventListener('input', function() {
+      lineWidth = parseInt(this.value);
+      lineWidthValue.textContent = lineWidth;
+      recalculateLineWidths();
+    });
+    
+    // 波浪幅度控制
+    waveAmplitudeSlider.addEventListener('input', function() {
+      waveAmplitude = parseInt(this.value);
+      waveAmplitudeValue.textContent = waveAmplitude;
+      
+      // 更新所有线条的振幅
+      for (let i = 0; i < lineSettings.length; i++) {
+        lineSettings[i].amplitude = waveAmplitude;
+      }
+      
+      updateLines();
+      draw();
+    });
+    
+    // 左右波浪幅度控制
+    leftAmplitudeSlider.addEventListener('input', function() {
+      leftAmplitude = parseInt(this.value);
+      leftAmplitudeValue.textContent = leftAmplitude;
+      draw();
+    });
+    
+    rightAmplitudeSlider.addEventListener('input', function() {
+      rightAmplitude = parseInt(this.value);
+      rightAmplitudeValue.textContent = rightAmplitude;
+      draw();
+    });
+    
+    // 随机起伏控制
+    waveRandomnessInput.addEventListener('input', function() {
+      waveRandomness = parseInt(this.value);
+      
+      // 重新生成控制点
+      for (let i = 0; i < lineSettings.length; i++) {
+        lineSettings[i].controlPoints = generateRandomControlPoints();
+      }
+      updateLines();
+      draw();
+    });
+    
+    // 颜色随机种子控制
+    colorSeedInput.addEventListener('input', function() {
+      colorSeed = parseInt(this.value);
+      updateLineColors();
+      draw();
+    });
+    
+    // 控制面板切换
+    hideButton.addEventListener('click', function() {
+      document.body.style.flexDirection = 'column';
+      controlsPanel.style.display = 'none';
+      toggleButton.style.display = 'block';
+    });
+    
+    toggleButton.addEventListener('click', function() {
+      document.body.style.flexDirection = 'row-reverse';
+      controlsPanel.style.display = 'block';
+      toggleButton.style.display = 'none';
+    });
+    
+    // 窗口大小调整
+    window.addEventListener('resize', function() {
+      draw();
+    });
+    
+    // 导出为PNG
+    function exportAsPNG() {
+      // 创建临时画布
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = canvas.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      
+      // 如果不是透明背景，则绘制背景
+      if (!transparentBgCheckbox.checked) {
+        tempCtx.fillStyle = colorPicker.value;
+        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+      }
+      
+      // 绘制波浪线
+      for (let i = 0; i < lines.length; i++) {
+        if (i >= lineSettings.length || !lineSettings[i].visible) continue;
+        
+        const line = lines[i];
+        const settings = lineSettings[i];
+        
+        // 设置线条样式
+        tempCtx.strokeStyle = settings.color;
+        tempCtx.lineWidth = settings.width;
+        
+        tempCtx.beginPath();
+        
+        // 绘制线条上的每个点
+        const baseY = line.originalY;
+        for (let j = 0; j < line.points.length; j++) {
+          const point = line.points[j];
+          
+          // 计算左右幅度比例
+          let amplitude = waveAmplitude;
+          if (leftAmplitude !== rightAmplitude) {
+            // 根据x位置加权计算波浪幅度
+            const leftWeight = 1 - point.x; // 左侧权重，从1递减到0
+            const rightWeight = point.x;    // 右侧权重，从0递增到1
+            amplitude = (leftAmplitude * leftWeight + rightAmplitude * rightWeight);
+          }
+          
+          // 应用幅度到波浪
+          const scaledY = point.y * (amplitude / waveAmplitude);
+          
+          // 计算绝对坐标
+          const x = tempCanvas.width * point.x;
+          const y = baseY + scaledY;
+          
+          if (j === 0) {
+            tempCtx.moveTo(x, y);
+          } else {
+            tempCtx.lineTo(x, y);
+          }
+        }
+        
+        tempCtx.stroke();
+      }
+      
+      // 创建下载链接
+      const link = document.createElement('a');
+      if (transparentBgCheckbox.checked) {
+        link.download = '波浪线效果_透明背景.png';
+      } else {
+        link.download = '波浪线效果.png';
+      }
+      
+      link.href = tempCanvas.toDataURL('image/png');
+      link.click();
+    }
+    
+    // 导出为SVG
+    function exportAsSVG() {
+      // 创建SVG文档
+      const svgNS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('width', canvas.width);
+      svg.setAttribute('height', canvas.height);
+      svg.setAttribute('xmlns', svgNS);
+      
+      // 如果不是透明背景，则添加背景矩形
+      if (!transparentBgCheckbox.checked) {
+        const rect = document.createElementNS(svgNS, 'rect');
+        rect.setAttribute('width', canvas.width);
+        rect.setAttribute('height', canvas.height);
+        rect.setAttribute('fill', colorPicker.value);
+        svg.appendChild(rect);
+      }
+      
+      // 添加波浪线
+      for (let i = 0; i < lines.length; i++) {
+        if (i >= lineSettings.length || !lineSettings[i].visible) continue;
+        
+        const line = lines[i];
+        const settings = lineSettings[i];
+        
+        // 创建路径元素
+        const path = document.createElementNS(svgNS, 'path');
+        path.setAttribute('stroke', settings.color);
+        path.setAttribute('stroke-width', settings.width);
+        path.setAttribute('fill', 'none');
+        
+        // 构建路径数据
+        let pathData = '';
+        const baseY = line.originalY;
+        for (let j = 0; j < line.points.length; j++) {
+          const point = line.points[j];
+          
+          // 计算左右幅度比例
+          let amplitude = waveAmplitude;
+          if (leftAmplitude !== rightAmplitude) {
+            // 根据x位置加权计算波浪幅度
+            const leftWeight = 1 - point.x; // 左侧权重，从1递减到0
+            const rightWeight = point.x;    // 右侧权重，从0递增到1
+            amplitude = (leftAmplitude * leftWeight + rightAmplitude * rightWeight);
+          }
+          
+          // 应用幅度到波浪
+          const scaledY = point.y * (amplitude / waveAmplitude);
+          
+          // 计算绝对坐标
+          const x = canvas.width * point.x;
+          const y = baseY + scaledY;
+          
+          if (j === 0) {
+            pathData += `M${x},${y}`;
+          } else {
+            pathData += ` L${x},${y}`;
+          }
+        }
+        
+        path.setAttribute('d', pathData);
+        svg.appendChild(path);
+      }
+      
+      // 将SVG转换为字符串
+      const serializer = new XMLSerializer();
+      const svgString = serializer.serializeToString(svg);
+      const svgBlob = new Blob([svgString], {type: 'image/svg+xml'});
+      const svgUrl = URL.createObjectURL(svgBlob);
+      
+      // 创建下载链接
+      const link = document.createElement('a');
+      if (transparentBgCheckbox.checked) {
+        link.download = '波浪线效果_透明背景.svg';
+      } else {
+        link.download = '波浪线效果.svg';
+      }
+      
+      link.href = svgUrl;
+      link.click();
+      
+      // 释放URL对象
+      URL.revokeObjectURL(svgUrl);
+    }
+    
+    // 在文档加载完成后初始化
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>

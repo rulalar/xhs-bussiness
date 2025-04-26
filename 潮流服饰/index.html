@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圆点扩散效果生成器</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #eaeaea;
+            display: flex;
+            flex-direction: column;
+            color: #333;
+            min-height: 100vh;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin: 20px 0;
+            text-align: center;
+            width: 100%;
+            font-size: 24px;
+        }
+        
+        .container {
+            display: flex;
+            width: 100%;
+            flex: 1;
+            gap: 0;
+            flex-wrap: nowrap;
+        }
+        
+        .canvas-container {
+            flex: 3;
+            position: relative;
+            background-color: #f2f2f2;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+        }
+        
+        .canvas-container.highlight {
+            background-color: #f0f8ff;
+            box-shadow: inset 0 0 0 3px #4a4ad9;
+        }
+        
+        .canvas-container:hover {
+            background-color: #fafafa;
+        }
+        
+        .controls {
+            flex: 1;
+            min-width: 280px;
+            max-width: 350px;
+            background-color: white;
+            padding: 20px;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.05);
+            overflow-y: auto;
+            height: 100vh;
+        }
+        
+        canvas {
+            max-width: 100%;
+            max-height: 100vh;
+            display: block;
+            background-color: #fff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        
+        .control-group:last-child {
+            border-bottom: none;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #444;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4a4ad9;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border: none;
+            border-radius: 5px;
+            background-color: #f5f5f5;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            margin-bottom: 10px;
+        }
+        
+        .button-group {
+            margin-top: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        
+        button {
+            padding: 12px 20px;
+            background-color: #4a4ad9;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+            box-shadow: 0 3px 8px rgba(74, 74, 217, 0.3);
+        }
+        
+        button:hover {
+            background-color: #3a3ac7;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(74, 74, 217, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(74, 74, 217, 0.3);
+        }
+        
+        .file-input-container {
+            margin-bottom: 15px;
+            position: relative;
+            width: 100%;
+        }
+        
+        .file-input-container label {
+            width: 100%;
+            padding: 12px 15px;
+            display: block;
+            text-align: center;
+            background-color: #4a4ad9;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 10px;
+        }
+        
+        .file-input-container label:hover {
+            background-color: #3a3ac7;
+        }
+        
+        .file-input-container input[type="file"] {
+            position: absolute;
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            z-index: -1;
+        }
+        
+        .file-name-display {
+            margin-top: 5px;
+            font-size: 14px;
+            text-align: center;
+            color: #666;
+        }
+        
+        .value-display {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: normal;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            margin-right: 5px;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .tab:hover {
+            background-color: #e8e8e8;
+        }
+        
+        .tab.active {
+            background-color: white;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+            color: #4a4ad9;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .upload-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #888;
+            font-size: 16px;
+            pointer-events: none;
+            background-color: rgba(255,255,255,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .upload-hint i {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 10px;
+            color: #4a4ad9;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column-reverse;
+            }
+            
+            .controls {
+                max-width: 100%;
+                height: auto;
+                padding: 15px;
+            }
+            
+            .canvas-container {
+                height: 60vh;
+            }
+        }
+    </style>
+    <!-- 添加字体图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <h1>圆点扩散效果生成器</h1>
+    
+    <div class="container">
+        <div class="canvas-container">
+            <canvas id="canvas" width="800" height="600"></canvas>
+            <div class="upload-hint" id="uploadHint">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>拖拽图片到此处上传</p>
+                <p>支持JPG、PNG格式</p>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="canvasWidth">画布宽度 <span id="canvasWidthValue" class="value-display">800</span>px</label>
+                <input type="range" id="canvasWidth" min="400" max="2000" value="800" step="50">
+            </div>
+            
+            <div class="control-group">
+                <label for="dotSize">圆点大小 <span id="dotSizeValue" class="value-display">5</span></label>
+                <input type="range" id="dotSize" min="1" max="20" value="5" step="0.5">
+            </div>
+            
+            <div class="control-group">
+                <label for="dotDensity">密集度 <span id="dotDensityValue" class="value-display">30</span></label>
+                <input type="range" id="dotDensity" min="5" max="100" value="30">
+            </div>
+            
+            <div class="control-group">
+                <label for="dotShape">圆点形状:</label>
+                <select id="dotShape">
+                    <option value="circle">圆形</option>
+                    <option value="square">方形</option>
+                    <option value="triangle">三角形</option>
+                    <option value="star">星形</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="dotOpacity">圆点透明度 <span id="dotOpacityValue" class="value-display">0.8</span></label>
+                <input type="range" id="dotOpacity" min="0.1" max="1" value="0.8" step="0.1">
+            </div>
+            
+            <div class="control-group">
+                <label for="dotColor">圆点颜色:</label>
+                <input type="color" id="dotColor" value="#7b68ee">
+            </div>
+            
+            <div class="control-group">
+                <label for="bgColor">背景颜色:</label>
+                <input type="color" id="bgColor" value="#5a2a12">
+            </div>
+            
+            <div class="control-group">
+                <label for="transparentBg">透明背景</label>
+                <input type="checkbox" id="transparentBg">
+                <span class="value-display">使用透明背景</span>
+            </div>
+            
+            <div class="control-group">
+                <label for="spreadFactor">扩散因子 <span id="spreadFactorValue" class="value-display">5</span></label>
+                <input type="range" id="spreadFactor" min="0" max="20" value="5" step="0.5">
+            </div>
+            
+            <div class="control-group">
+                <label for="threshold">亮度阈值 <span id="thresholdValue" class="value-display">120</span></label>
+                <input type="range" id="threshold" min="0" max="255" value="120">
+            </div>
+            
+            <div class="button-group">
+                <button id="downloadBtn">下载PNG</button>
+                <button id="downloadSvgBtn">下载SVG</button>
+                <button id="resetBtn">重置</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 获取DOM元素
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const downloadSvgBtn = document.getElementById('downloadSvgBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const uploadHint = document.getElementById('uploadHint');
+        
+        // 控制元素
+        const canvasWidth = document.getElementById('canvasWidth');
+        const dotSize = document.getElementById('dotSize');
+        const dotDensity = document.getElementById('dotDensity');
+        const dotShape = document.getElementById('dotShape');
+        const dotOpacity = document.getElementById('dotOpacity');
+        const dotColor = document.getElementById('dotColor');
+        const bgColor = document.getElementById('bgColor');
+        const transparentBg = document.getElementById('transparentBg');
+        const spreadFactor = document.getElementById('spreadFactor');
+        const threshold = document.getElementById('threshold');
+        
+        // 值显示元素
+        const canvasWidthValue = document.getElementById('canvasWidthValue');
+        const dotSizeValue = document.getElementById('dotSizeValue');
+        const dotDensityValue = document.getElementById('dotDensityValue');
+        const dotOpacityValue = document.getElementById('dotOpacityValue');
+        const spreadFactorValue = document.getElementById('spreadFactorValue');
+        const thresholdValue = document.getElementById('thresholdValue');
+        
+        // 更新显示值和实时生成效果
+        function updateValuesAndGenerate() {
+            updateSliderValues();
+            
+            // 如果有原始图片，自动生成效果
+            if (originalImage) {
+                generateDotEffect();
+            }
+        }
+        
+        // 更新滑块显示值
+        function updateSliderValues() {
+            canvasWidthValue.textContent = canvasWidth.value;
+            dotSizeValue.textContent = dotSize.value;
+            dotDensityValue.textContent = dotDensity.value;
+            dotOpacityValue.textContent = dotOpacity.value;
+            spreadFactorValue.textContent = spreadFactor.value;
+            thresholdValue.textContent = threshold.value;
+        }
+        
+        // 初始化显示值
+        updateSliderValues();
+        
+        // 为所有控件添加事件监听器
+        canvasWidth.addEventListener('input', updateCanvasWidth);
+        dotSize.addEventListener('input', updateValuesAndGenerate);
+        dotDensity.addEventListener('input', updateValuesAndGenerate);
+        dotShape.addEventListener('change', updateValuesAndGenerate);
+        dotOpacity.addEventListener('input', updateValuesAndGenerate);
+        dotColor.addEventListener('input', updateValuesAndGenerate);
+        bgColor.addEventListener('input', updateValuesAndGenerate);
+        transparentBg.addEventListener('change', updateValuesAndGenerate);
+        spreadFactor.addEventListener('input', updateValuesAndGenerate);
+        threshold.addEventListener('input', updateValuesAndGenerate);
+        
+        // 更新画布宽度
+        function updateCanvasWidth() {
+            canvasWidthValue.textContent = canvasWidth.value;
+            
+            if (originalImage) {
+                const newWidth = parseInt(canvasWidth.value);
+                // 保持比例
+                const aspectRatio = originalImage.height / originalImage.width;
+                const newHeight = Math.round(newWidth * aspectRatio);
+                
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+                
+                // 重新绘制原始图片
+                ctx.drawImage(originalImage, 0, 0, newWidth, newHeight);
+                
+                // 重新生成效果
+                generateDotEffect();
+            }
+        }
+        
+        let originalImage = null;
+        let dotsData = [];
+        
+        function handleFileUpload(file) {
+            if (!file || !file.type.match('image.*')) {
+                alert('请选择有效的图片文件！');
+                return;
+            }
+            
+            // 隐藏上传提示
+            uploadHint.style.display = 'none';
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    // 使用用户设定的宽度
+                    const userWidth = parseInt(canvasWidth.value);
+                    // 计算对应高度以保持图片比例
+                    const aspectRatio = img.height / img.width;
+                    const height = Math.round(userWidth * aspectRatio);
+                    
+                    canvas.width = userWidth;
+                    canvas.height = height;
+                    
+                    // 绘制原始图片
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, userWidth, height);
+                    originalImage = img;
+                    
+                    // 自动生成效果
+                    generateDotEffect();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // 生成效果
+        function generateDotEffect() {
+            // 获取基本参数
+            const size = parseFloat(dotSize.value);
+            const density = parseInt(dotDensity.value);
+            const color = dotColor.value;
+            const background = bgColor.value;
+            const isTransparentBg = transparentBg.checked;
+            const spread = parseFloat(spreadFactor.value);
+            const thresholdValue = parseInt(threshold.value);
+            
+            // 获取高级参数
+            const shape = dotShape.value;
+            const opacity = parseFloat(dotOpacity.value);
+            
+            // 清空点数据数组
+            dotsData = [];
+            
+            // 清除画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制背景（如果不是透明）
+            if (!isTransparentBg) {
+                ctx.fillStyle = background;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            // 绘制原始图片到一个临时画布以获取像素数据
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            tempCtx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+            const imageData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            // 设置全局透明度
+            ctx.globalAlpha = opacity;
+            
+            // 计算点与点之间的间距
+            const spacing = density / 10;
+            
+            // 绘制圆点
+            for (let y = 0; y < canvas.height; y += spacing) {
+                for (let x = 0; x < canvas.width; x += spacing) {
+                    const i = (Math.floor(y) * canvas.width + Math.floor(x)) * 4;
+                    
+                    // 计算亮度 (R+G+B)/3
+                    const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                    
+                    if (brightness < thresholdValue) {
+                        // 设置颜色
+                        let dotColorValue;
+                        if (color) {
+                            dotColorValue = color;
+                        } else {
+                            // 使用原图颜色
+                            dotColorValue = `rgb(${data[i]}, ${data[i+1]}, ${data[i+2]})`;
+                        }
+                        ctx.fillStyle = dotColorValue;
+                        
+                        // 添加随机扩散
+                        const offsetX = (Math.random() - 0.5) * spread;
+                        const offsetY = (Math.random() - 0.5) * spread;
+                        
+                        let currentSize = size * (1 - brightness / 255) * 1.5;
+                        
+                        // 保存当前状态
+                        ctx.save();
+                        
+                        // 移动到点的位置
+                        ctx.translate(x + offsetX, y + offsetY);
+                        
+                        // 根据形状绘制
+                        switch(shape) {
+                            case 'circle':
+                                ctx.beginPath();
+                                ctx.arc(0, 0, currentSize, 0, Math.PI * 2);
+                                ctx.fill();
+                                break;
+                            case 'square':
+                                ctx.fillRect(-currentSize, -currentSize, currentSize * 2, currentSize * 2);
+                                break;
+                            case 'triangle':
+                                ctx.beginPath();
+                                ctx.moveTo(0, -currentSize);
+                                ctx.lineTo(currentSize, currentSize);
+                                ctx.lineTo(-currentSize, currentSize);
+                                ctx.closePath();
+                                ctx.fill();
+                                break;
+                            case 'star':
+                                drawStar(ctx, 0, 0, 5, currentSize, currentSize / 2);
+                                break;
+                        }
+                        
+                        // 保存点数据以便生成SVG
+                        dotsData.push({
+                            x: x + offsetX,
+                            y: y + offsetY,
+                            size: currentSize,
+                            color: dotColorValue,
+                            shape: shape
+                        });
+                        
+                        // 恢复状态
+                        ctx.restore();
+                    }
+                }
+            }
+            
+            // 重置透明度
+            ctx.globalAlpha = 1.0;
+        }
+        
+        // 绘制星形
+        function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+            let rot = Math.PI / 2 * 3;
+            let x = cx;
+            let y = cy;
+            let step = Math.PI / spikes;
+            
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - outerRadius);
+            
+            for (let i = 0; i < spikes; i++) {
+                x = cx + Math.cos(rot) * outerRadius;
+                y = cy + Math.sin(rot) * outerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+                
+                x = cx + Math.cos(rot) * innerRadius;
+                y = cy + Math.sin(rot) * innerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+            }
+            
+            ctx.lineTo(cx, cy - outerRadius);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        // 生成SVG文件
+        function generateSVG() {
+            if (!originalImage || dotsData.length === 0) {
+                alert('请先生成效果！');
+                return;
+            }
+            
+            const background = bgColor.value;
+            const isTransparentBg = transparentBg.checked;
+            const opacity = parseFloat(dotOpacity.value);
+            
+            // 创建SVG标签
+            let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${canvas.width} ${canvas.height}">`;
+            
+            // 添加背景（如果不是透明）
+            if (!isTransparentBg) {
+                svgContent += `<rect width="100%" height="100%" fill="${background}" />`;
+            }
+            
+            // 添加每个点
+            dotsData.forEach(dot => {
+                const opacityAttr = opacity < 1 ? ` opacity="${opacity}"` : '';
+                
+                if (dot.shape === 'circle') {
+                    svgContent += `<circle cx="${dot.x}" cy="${dot.y}" r="${dot.size}" fill="${dot.color}"${opacityAttr} />`;
+                } else if (dot.shape === 'square') {
+                    svgContent += `<rect x="${dot.x - dot.size}" y="${dot.y - dot.size}" width="${dot.size * 2}" height="${dot.size * 2}" fill="${dot.color}"${opacityAttr} />`;
+                } else if (dot.shape === 'triangle') {
+                    svgContent += `<polygon points="${dot.x},${dot.y - dot.size} ${dot.x + dot.size},${dot.y + dot.size} ${dot.x - dot.size},${dot.y + dot.size}" fill="${dot.color}"${opacityAttr} />`;
+                } else if (dot.shape === 'star') {
+                    svgContent += `<path d="${generateStarPath(dot.x, dot.y, 5, dot.size, dot.size / 2)}" fill="${dot.color}"${opacityAttr} />`;
+                }
+            });
+            
+            // 结束SVG标签
+            svgContent += '</svg>';
+            
+            return svgContent;
+        }
+        
+        // 生成星形SVG路径
+        function generateStarPath(cx, cy, spikes, outerRadius, innerRadius) {
+            let points = '';
+            let rot = Math.PI / 2 * 3;
+            let x, y;
+            const step = Math.PI / spikes;
+            
+            for (let i = 0; i < spikes; i++) {
+                x = cx + Math.cos(rot) * outerRadius;
+                y = cy + Math.sin(rot) * outerRadius;
+                points += (i === 0 ? 'M ' : 'L ') + x + ' ' + y + ' ';
+                rot += step;
+                
+                x = cx + Math.cos(rot) * innerRadius;
+                y = cy + Math.sin(rot) * innerRadius;
+                points += 'L ' + x + ' ' + y + ' ';
+                rot += step;
+            }
+            
+            points += 'Z';
+            return points;
+        }
+        
+        // 下载PNG图片
+        downloadBtn.addEventListener('click', function() {
+            if (!originalImage) {
+                alert('请先上传图片！');
+                return;
+            }
+            
+            const link = document.createElement('a');
+            link.download = '圆点效果图.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+        
+        // 下载SVG
+        downloadSvgBtn.addEventListener('click', function() {
+            if (!originalImage) {
+                alert('请先上传图片！');
+                return;
+            }
+            
+            const svgContent = generateSVG();
+            if (!svgContent) return;
+            
+            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.download = '圆点效果图.svg';
+            link.href = url;
+            link.click();
+            
+            // 释放URL对象
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        });
+        
+        // 重置
+        resetBtn.addEventListener('click', function() {
+            if (originalImage) {
+                ctx.filter = 'none';
+                ctx.globalAlpha = 1.0;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+                // 清空点数据
+                dotsData = [];
+            } else {
+                initCanvas();
+            }
+        });
+        
+        // 初始化画布
+        function initCanvas() {
+            canvas.width = 800;
+            canvas.height = 600;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#f2f2f2';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 显示上传提示
+            uploadHint.style.display = 'block';
+        }
+        
+        // 让画布容器具有可点击功能，点击后触发文件上传
+        document.querySelector('.canvas-container').addEventListener('click', function(e) {
+            if (!originalImage) {
+                // 创建一个临时的文件输入元素
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'image/*';
+                fileInput.style.display = 'none';
+                document.body.appendChild(fileInput);
+                
+                fileInput.addEventListener('change', function(e) {
+                    if (e.target.files && e.target.files[0]) {
+                        handleFileUpload(e.target.files[0]);
+                    }
+                    // 用完后移除元素
+                    document.body.removeChild(fileInput);
+                });
+                
+                fileInput.click();
+            }
+        });
+        
+        // 添加拖放功能
+        const canvasContainer = document.querySelector('.canvas-container');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            canvasContainer.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            canvasContainer.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            canvasContainer.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            canvasContainer.classList.add('highlight');
+        }
+        
+        function unhighlight() {
+            canvasContainer.classList.remove('highlight');
+        }
+        
+        canvasContainer.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0 && files[0].type.match('image.*')) {
+                handleFileUpload(files[0]);
+            }
+        }
+        
+        // 初始化
+        initCanvas();
+    </script>
+</body>
+</html> 

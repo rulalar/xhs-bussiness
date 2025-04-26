@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>功能集合</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Banner区域 -->
+  <div class="banner">
+    <!-- Banner图片通过CSS背景设置 -->
+  </div>
+  
+  <!-- 内容区域 -->
+  <div class="content-area">
+    <div class="container">
+      <div class="grid" id="card-container">
+        <!-- 卡片将通过JavaScript动态生成 -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 直接在JavaScript中定义数据，避免跨域问题
+      const data = [
+        { 
+          "title": "大健康", 
+          "path": "./大健康/index.html",
+          "description": "以知识海洋为主要视觉语言，页面可以快速生成不同尺寸的海洋线条以适配不同场景",
+          "image": "./assets/1.jpg"
+        },
+        { 
+          "title": "交通", 
+          "path": "./交通/index.html",
+          "description": "以知识海洋为主要视觉语言，页面可以快速生成不同尺寸的海洋线条以适配不同场景",
+          "image": "./assets/2.jpg"
+        },
+        { 
+          "title": "教育", 
+          "path": "./教育/index.html",
+          "description": "以知识海洋为主要视觉语言，页面可以快速生成不同尺寸的海洋线条以适配不同场景",
+          "image": "./assets/3.jpg"
+        },
+        { 
+          "title": "潮流服饰", 
+          "path": "./潮流服饰/index.html",
+          "description": "以知识海洋为主要视觉语言，页面可以快速生成不同尺寸的海洋线条以适配不同场景",
+          "image": "./assets/4.jpg"
+        },
+        { 
+          "title": "美妆个护", 
+          "path": "./美妆个护/index.html",
+          "description": "以知识海洋为主要视觉语言，页面可以快速生成不同尺寸的海洋线条以适配不同场景",
+          "image": "./assets/5.jpg"
+        },
+        { 
+          "title": "游戏数码", 
+          "path": "./游戏数码/index.html",
+          "description": "以知识海洋为主要视觉语言，页面可以快速生成不同尺寸的海洋线条以适配不同场景",
+          "image": "./assets/6.jpg"
+        }
+      ];
+      
+      const container = document.getElementById('card-container');
+      
+      // 为每个子网页创建卡片
+      data.forEach(item => {
+        const card = document.createElement('a');
+        card.href = item.path;
+        card.className = 'card';
+        
+        // 创建卡片内容区域（上半部分）
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'card-content';
+        
+        // 创建标题和描述
+        const title = document.createElement('h2');
+        title.textContent = item.title;
+        
+        const description = document.createElement('p');
+        description.textContent = item.description || '';
+        
+        // 组装上半部分
+        contentDiv.appendChild(title);
+        contentDiv.appendChild(description);
+        
+        // 创建图片区域（下半部分）
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'card-image';
+        
+        // 创建并添加图片
+        const image = document.createElement('img');
+        image.src = item.image;
+        image.alt = item.title;
+        image.onerror = function() {
+          // 图片加载失败时显示背景色
+          this.style.display = 'none';
+          imageContainer.classList.add('image-fallback');
+        };
+        imageContainer.appendChild(image);
+        
+        // 组装卡片：先内容后图片
+        card.appendChild(contentDiv);
+        card.appendChild(imageContainer);
+        
+        container.appendChild(card);
+      });
+    });
+  </script>
+</body>
+</html> 
