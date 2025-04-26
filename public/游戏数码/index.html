@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态波浪效果控制器 - 增强版</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: row;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .canvas-container {
+            flex: 1;
+            margin-right: 20px;
+            position: relative;
+        }
+        
+        #canvas {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            display: block;
+        }
+        
+        .controls {
+            width: 320px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #555;
+        }
+        
+        label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        input[type="range"] {
+            width: 60%;
+        }
+        
+        input[type="number"] {
+            width: 50px;
+            text-align: center;
+        }
+        
+        .value-display {
+            width: 40px;
+            text-align: right;
+        }
+        
+        button {
+            padding: 8px 12px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #3367d6;
+        }
+        
+        button.btn-danger {
+            background-color: #ea4335;
+        }
+        
+        button.btn-danger:hover {
+            background-color: #d33426;
+        }
+        
+        button.btn-success {
+            background-color: #34a853;
+        }
+        
+        button.btn-success:hover {
+            background-color: #2a8a44;
+        }
+        
+        .preset-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .color-picker {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .color-picker input {
+            margin-left: 10px;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .svg-container {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+        
+        .play-pause-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(0,0,0,0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        .play-pause-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+        
+        .resolution-note {
+            margin-top: 10px;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #555;
+        }
+        
+        .align-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .align-buttons button {
+            flex: 1;
+            margin: 0 5px;
+            opacity: 0.7;
+        }
+        
+        .align-buttons button.active {
+            background-color: #3367d6;
+            opacity: 1;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="canvas-container">
+            <canvas id="canvas" width="1000" height="1400"></canvas>
+            <div class="svg-container" id="svg-container"></div>
+            <div class="play-pause-btn" id="play-pause-btn">
+                <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                </svg>
+                <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="display: none;">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <h1>波浪动态控制器</h1>
+            
+            <div class="control-group">
+                <h2>动画控制</h2>
+                <label>
+                    速度
+                    <input type="range" id="speed" min="0.005" max="0.1" step="0.001" value="0.035">
+                    <span id="speed-value" class="value-display">0.035</span>
+                </label>
+                <div class="action-buttons">
+                    <button id="play-pause-button" class="btn-success">暂停</button>
+                    <button id="export-ai-btn">导出AI兼容格式</button>
+                    <button id="export-png-btn">导出PNG图像</button>
+                </div>
+                <div class="resolution-note">
+                    当前分辨率: 1000×1400 (高清)
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h2>形状控制</h2>
+                <label>
+                    圆角半径
+                    <input type="range" id="cornerRadius" min="0" max="20" step="0.5" value="0">
+                    <span id="cornerRadius-value" class="value-display">0</span>
+                </label>
+                <div class="preset-buttons">
+                    <button id="triangle">三角形</button>
+                    <button id="square">方形</button>
+                    <button id="circle">圆形</button>
+                    <button id="custom-shape" class="btn-success">上传自定义图形</button>
+                </div>
+                <input type="file" id="shape-upload" accept="image/*" style="display: none;">
+            </div>
+            
+            <div class="control-group">
+                <h2>尺寸控制</h2>
+                <label>
+                    顶部宽度
+                    <input type="range" id="topWidth" min="1" max="30" step="1" value="6">
+                    <span id="topWidth-value" class="value-display">6</span>
+                </label>
+                <label>
+                    底部宽度
+                    <input type="range" id="bottomWidth" min="10" max="80" step="1" value="40">
+                    <span id="bottomWidth-value" class="value-display">40</span>
+                </label>
+                <label>
+                    段高度
+                    <input type="range" id="segmentHeight" min="40" max="100" step="5" value="77.5">
+                    <span id="segmentHeight-value" class="value-display">77.5</span>
+                </label>
+                <label>
+                    分段数量
+                    <input type="range" id="segments" min="3" max="20" step="1" value="8">
+                    <span id="segments-value" class="value-display">8</span>
+                </label>
+                <label>
+                    水平间距
+                    <input type="range" id="spacing" min="0" max="30" step="1" value="10">
+                    <span id="spacing-value" class="value-display">10</span>
+                </label>
+                <label>
+                    垂直间距
+                    <input type="range" id="verticalSpacing" min="0" max="20" step="1" value="0">
+                    <span id="verticalSpacing-value" class="value-display">0</span>
+                </label>
+            </div>
+            
+            <div class="control-group">
+                <h2>波动控制</h2>
+                <label>
+                    波动幅度
+                    <input type="range" id="amplitude" min="0.1" max="1.0" step="0.05" value="0.5">
+                    <span id="amplitude-value" class="value-display">0.5</span>
+                </label>
+                <label>
+                    相位差
+                    <input type="range" id="phaseOffset" min="0.1" max="2.0" step="0.1" value="0.7">
+                    <span id="phaseOffset-value" class="value-display">0.7</span>
+                </label>
+                <label>
+                    规则性
+                    <input type="range" id="randomness" min="0" max="1" step="0.05" value="0">
+                    <span id="randomness-value" class="value-display">0</span>
+                </label>
+            </div>
+            
+            <div class="control-group">
+                <h2>视觉效果</h2>
+                <label>
+                    透明度
+                    <input type="range" id="opacity" min="0.1" max="1" step="0.05" value="1">
+                    <span id="opacity-value" class="value-display">1</span>
+                </label>
+                <label>
+                    旋转角度 (度)
+                    <input type="range" id="rotation" min="0" max="360" step="5" value="0">
+                    <span id="rotation-value" class="value-display">0</span>
+                </label>
+                <label>
+                    显示边框
+                    <label class="switch">
+                        <input type="checkbox" id="showBorder" checked>
+                        <span class="slider"></span>
+                    </label>
+                </label>
+            </div>
+            
+            <div class="control-group">
+                <h2>对齐方式</h2>
+                <div class="align-buttons">
+                    <button id="align-left" class="active">左对齐</button>
+                    <button id="align-center">居中对齐</button>
+                    <button id="align-right">右对齐</button>
+                </div>
+            </div>
+            
+            <button id="reset">重置默认值</button>
+        </div>
+    </div>
+
+    <script>
+        // 初始化动画变量
+        let animationTime = 0;
+        let animationId = null;
+        let isPlaying = true;
+        let customShapeImage = null;
+        
+        // 波浪参数
+        const params = {
+            speed: 0.035,
+            shape: 'square',
+            cornerRadius: 0,
+            topWidth: 6,
+            bottomWidth: 40,
+            segmentHeight: 77.5,
+            segments: 8,
+            spacing: 10,
+            verticalSpacing: 0,
+            amplitude: 0.5,
+            phaseOffset: 0.7,
+            randomness: 0,
+            opacity: 1.0,
+            rotation: 0,
+            shapeColor: "#000000",
+            bgColor: "#f0f0f0",
+            showBorder: true,
+            alignment: 'left',
+            isAnimating: true,
+            baseWidthRatios: [0.20, 0.25, 0.35, 0.50, 0.70, 0.85, 0.95, 1.00]
+        };
+
+        // 辅助函数 - 值映射
+        function mapValue(value, fromLow, fromHigh, toLow, toHigh) {
+            return toLow + (value - fromLow) * (toHigh - toLow) / (fromHigh - fromLow);
+        }
+        
+        // 获取canvas和上下文
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 暂停/播放功能
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const playPauseButton = document.getElementById('play-pause-button');
+        
+        function togglePlayPause() {
+            isPlaying = !isPlaying;
+            
+            const playIcon = document.getElementById('play-icon');
+            const pauseIcon = document.getElementById('pause-icon');
+            
+            if (isPlaying) {
+                // 更新浮动按钮图标
+                playIcon.style.display = 'none';
+                pauseIcon.style.display = 'block';
+                
+                // 更新控制面板按钮
+                playPauseButton.textContent = '暂停';
+                playPauseButton.className = 'btn-danger';
+                
+                if (!animationId) {
+                    draw();
+                }
+            } else {
+                // 更新浮动按钮图标
+                pauseIcon.style.display = 'none';
+                playIcon.style.display = 'block';
+                
+                // 更新控制面板按钮
+                playPauseButton.textContent = '播放';
+                playPauseButton.className = 'btn-success';
+                
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                }
+            }
+        }
+        
+        playPauseBtn.addEventListener('click', togglePlayPause);
+        document.getElementById('play-pause-button').addEventListener('click', function() {
+            togglePlayPause();
+        });
+        
+        // 导出为AI
+        document.getElementById('export-ai-btn').addEventListener('click', exportAI);
+        // 导出为PNG
+        document.getElementById('export-png-btn').addEventListener('click', exportPNG);
+        
+        // 形状预设
+        document.getElementById('triangle').addEventListener('click', function() {
+            params.shape = 'triangle';
+            updateUI();
+            draw();
+        });
+        
+        document.getElementById('square').addEventListener('click', function() {
+            params.shape = 'square';
+            updateUI();
+            draw();
+        });
+        
+        document.getElementById('circle').addEventListener('click', function() {
+            params.shape = 'circle';
+            updateUI();
+            draw();
+        });
+        
+        // 自定义图形上传
+        document.getElementById('custom-shape').addEventListener('click', function() {
+            document.getElementById('shape-upload').click();
+        });
+        
+        document.getElementById('shape-upload').addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    customShapeImage = new Image();
+                    customShapeImage.onload = function() {
+                        params.shape = 'custom';
+                        updateUI();
+                        draw();
+                    };
+                    customShapeImage.src = event.target.result;
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // 更新UI以反映当前形状
+        function updateUI() {
+            // 高亮当前选中的形状按钮
+            const buttons = document.querySelectorAll('.preset-buttons button');
+            buttons.forEach(button => {
+                button.style.fontWeight = 'normal';
+                button.style.opacity = '0.8';
+            });
+            
+            if (params.shape !== 'custom') {
+                document.getElementById(params.shape).style.fontWeight = 'bold';
+                document.getElementById(params.shape).style.opacity = '1';
+            } else {
+                document.getElementById('custom-shape').style.fontWeight = 'bold';
+                document.getElementById('custom-shape').style.opacity = '1';
+            }
+        }
+        
+        // 主绘制函数
+        function draw() {
+            // 清空画布
+            ctx.fillStyle = params.bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 更新动画时间
+            if (isPlaying) {
+                animationTime += params.speed;
+            }
+            
+            // 绘制所有条形
+            const numBars = 11;
+            const maxBarWidth = params.bottomWidth;
+            const minBarWidth = params.topWidth;
+            const spacing = params.spacing;
+            const totalWidth = numBars * (maxBarWidth + spacing) - spacing;
+            let startX;
+            
+            // 根据对齐方式调整起始X坐标
+            switch(params.alignment) {
+                case 'left':
+                    startX = 20; // 左对齐
+                    break;
+                case 'center':
+                    startX = (canvas.width - totalWidth) / 2; // 居中对齐
+                    break;
+                case 'right':
+                    startX = canvas.width - totalWidth - 20; // 右对齐
+                    break;
+                default:
+                    startX = (canvas.width - totalWidth) / 2; // 默认居中
+            }
+            
+            for (let i = 0; i < numBars; i++) {
+                const phaseOffset = i * params.phaseOffset;
+                drawWaveBar(
+                    startX + i * (maxBarWidth + spacing),
+                    maxBarWidth,
+                    minBarWidth,
+                    phaseOffset,
+                    i // 传递条形索引
+                );
+            }
+            
+            // 底部白色区域
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+            
+            // 绘制标签
+            const labels = [
+                "linea/graph", 
+                "improviso", 
+                "mutari", 
+                "apparire", 
+                "strutturasi", 
+                "simbolo", 
+                "stabilito", 
+                "irrimediabile", 
+                "segreto", 
+                "nero", 
+                "qualità"
+            ];
+            
+            const visibleLabels = [0, 5, 6, 7, 8, 9];
+            
+            ctx.fillStyle = "black";
+            ctx.font = "8px Arial";
+            ctx.textAlign = "center";
+            
+            for (let i = 0; i < visibleLabels.length; i++) {
+                const index = visibleLabels[i];
+                if (index < labels.length) {
+                    const x = startX + index * (maxBarWidth + spacing) + maxBarWidth/2;
+                    const y = canvas.height - 25;
+                    ctx.fillText(labels[index], x, y);
+                }
+            }
+            
+            // 右下角标签
+            ctx.textAlign = "right";
+            ctx.fillText("xxxx", canvas.width - 12, canvas.height - 12);
+            
+            // 显示动画状态 - 仅用于调试
+            ctx.textAlign = "left";
+            ctx.font = "8px Arial";
+            ctx.fillText("动画时间: " + animationTime.toFixed(2), 10, 15);
+            
+            // 继续动画循环
+            if (isPlaying) {
+                animationId = requestAnimationFrame(draw);
+            }
+        }
+        
+        // 绘制一个波状条形
+        function drawWaveBar(baseX, maxWidth, minWidth, phaseOffset, barIndex) {
+            const numSegments = params.segments;
+            const segmentHeight = params.segmentHeight;
+            const verticalSpacing = params.verticalSpacing;
+            
+            // 使用当前的baseWidthRatios
+            const baseWidthRatios = params.baseWidthRatios;
+            
+            // 波动相位，基于动画时间和偏移
+            const wavePhase = params.isAnimating ? animationTime + phaseOffset : phaseOffset;
+            
+            // 最终的波动因子
+            const waveFactor = Math.sin(wavePhase) * params.amplitude;
+            
+            // 绘制每个分段
+            for (let i = 0; i < numSegments; i++) {
+                // 计算这个段在整个条形中的相对位置
+                const normPosition = i / (numSegments - 1);
+                
+                // 根据位置决定宽度变化方向
+                let widthModifier;
+                
+                if (normPosition < 0.5) {
+                    // 顶部一半 - 使用正向波动
+                    const effect = mapValue(normPosition, 0, 0.5, 1.0, 0.0);
+                    widthModifier = waveFactor * effect * 0.8;
+                } else {
+                    // 底部一半 - 使用反向波动
+                    const effect = mapValue(normPosition, 0.5, 1.0, 0.0, 1.0);
+                    widthModifier = -waveFactor * effect * 0.8;  // 注意这里的负号使效果反向
+                }
+                
+                // 动态获取基础宽度比例
+                let baseRatio;
+                if (i < baseWidthRatios.length) {
+                    baseRatio = baseWidthRatios[i];
+                } else {
+                    // 如果设置了更多的段，插值计算比例
+                    baseRatio = i / (numSegments - 1);
+                }
+                
+                // 添加随机性 - 这会影响宽度过渡的规则性
+                if (params.randomness > 0) {
+                    // 使用持久性随机数，基于段索引和条索引
+                    const randomSeed = (i * 0.1 + phaseOffset * 0.5) * 100;
+                    const pseudoRandom = Math.sin(randomSeed) * 0.5 + 0.5; // 0-1范围的伪随机数
+                    
+                    // 规则性越高，扰动越大
+                    const randomFactor = (pseudoRandom * 2 - 1) * params.randomness * 0.5;
+                    baseRatio = baseRatio * (1 + randomFactor);
+                    
+                    // 确保基础比例在合理范围内
+                    baseRatio = Math.max(0.1, Math.min(baseRatio, 1.2));
+                }
+                
+                // 应用变化到基础宽度比例
+                let widthRatio = baseRatio + widthModifier;
+                widthRatio = Math.max(0.1, Math.min(widthRatio, 1.5));
+                
+                // 计算实际宽度
+                const segmentWidth = minWidth + (maxWidth - minWidth) * widthRatio;
+                
+                // 根据对齐方式计算X位置
+                let segmentX;
+                switch(params.alignment) {
+                    case 'left':
+                        segmentX = baseX; // 左对齐
+                        break;
+                    case 'center':
+                        segmentX = baseX + (maxWidth - segmentWidth) / 2; // 居中对齐
+                        break;
+                    case 'right':
+                        segmentX = baseX + (maxWidth - segmentWidth); // 右对齐
+                        break;
+                    default:
+                        segmentX = baseX; // 默认左对齐
+                }
+                
+                // 添加垂直间距到Y坐标计算
+                const segmentY = 30 + i * (segmentHeight + verticalSpacing);
+                
+                // 根据形状类型绘制
+                const centerX = segmentX + segmentWidth / 2;
+                const centerY = segmentY + segmentHeight / 2;
+                
+                // 保存当前状态
+                ctx.save();
+                
+                // 设置透明度
+                ctx.globalAlpha = params.opacity;
+                
+                // 如果有旋转，应用旋转
+                if (params.rotation !== 0) {
+                    ctx.translate(centerX, centerY);
+                    ctx.rotate(params.rotation * Math.PI / 180);
+                    ctx.translate(-centerX, -centerY);
+                }
+                
+                // 设置填充颜色
+                ctx.fillStyle = params.shapeColor;
+                
+                // 绘制形状
+                if (params.shape === 'square') {
+                    // 绘制矩形，可能有圆角
+                    if (params.cornerRadius > 0) {
+                        const radius = params.cornerRadius * Math.min(segmentWidth, segmentHeight) / 100;
+                        drawRoundedRect(ctx, segmentX, segmentY, segmentWidth, segmentHeight, radius);
+                    } else {
+                        ctx.fillRect(segmentX, segmentY, segmentWidth, segmentHeight);
+                    }
+                } else if (params.shape === 'circle') {
+                    // 绘制椭圆
+                    ctx.beginPath();
+                    ctx.ellipse(centerX, centerY, segmentWidth / 2, segmentHeight / 2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (params.shape === 'triangle') {
+                    // 绘制三角形
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, segmentY);
+                    ctx.lineTo(segmentX, segmentY + segmentHeight);
+                    ctx.lineTo(segmentX + segmentWidth, segmentY + segmentHeight);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (params.shape === 'custom' && customShapeImage) {
+                    // 使用自定义图像
+                    try {
+                        ctx.drawImage(customShapeImage, segmentX, segmentY, segmentWidth, segmentHeight);
+                    } catch (e) {
+                        console.error("加载自定义图像时出错:", e);
+                        ctx.fillStyle = 'gray';
+                        ctx.fillRect(segmentX, segmentY, segmentWidth, segmentHeight);
+                    }
+                }
+                
+                // 如果显示边框，绘制边框
+                if (params.showBorder) {
+                    ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
+                    ctx.lineWidth = 0.5;
+                    
+                    if (params.shape === 'square') {
+                        if (params.cornerRadius > 0) {
+                            const radius = params.cornerRadius * Math.min(segmentWidth, segmentHeight) / 100;
+                            ctx.beginPath();
+                            drawRoundedRectPath(ctx, segmentX, segmentY, segmentWidth, segmentHeight, radius);
+                            ctx.stroke();
+                        } else {
+                            ctx.strokeRect(segmentX, segmentY, segmentWidth, segmentHeight);
+                        }
+                    } else if (params.shape === 'circle') {
+                        ctx.beginPath();
+                        ctx.ellipse(centerX, centerY, segmentWidth / 2, segmentHeight / 2, 0, 0, Math.PI * 2);
+                        ctx.stroke();
+                    } else if (params.shape === 'triangle') {
+                        ctx.beginPath();
+                        ctx.moveTo(centerX, segmentY);
+                        ctx.lineTo(segmentX, segmentY + segmentHeight);
+                        ctx.lineTo(segmentX + segmentWidth, segmentY + segmentHeight);
+                        ctx.closePath();
+                        ctx.stroke();
+                    } else if (params.shape === 'custom' && customShapeImage) {
+                        ctx.strokeRect(segmentX, segmentY, segmentWidth, segmentHeight);
+                    }
+                }
+                
+                // 恢复状态
+                ctx.restore();
+            }
+        }
+        
+        // 辅助函数 - 绘制圆角矩形
+        function drawRoundedRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            drawRoundedRectPath(ctx, x, y, width, height, radius);
+            ctx.fill();
+        }
+        
+        function drawRoundedRectPath(ctx, x, y, width, height, radius) {
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+        
+        // 导出为AI兼容格式（实际上是导出更兼容的SVG）
+        function exportAI() {
+            // 暂停动画
+            if (isPlaying) {
+                togglePlayPause();
+            }
+            
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svgContainer = document.getElementById('svg-container');
+            svgContainer.innerHTML = '';
+            
+            // 创建SVG元素
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("width", canvas.width);
+            svg.setAttribute("height", canvas.height);
+            svg.setAttribute("xmlns", svgNS);
+            svg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+            svg.setAttribute("version", "1.1");
+            svgContainer.appendChild(svg);
+            
+            // 添加背景
+            const background = document.createElementNS(svgNS, "rect");
+            background.setAttribute("width", canvas.width);
+            background.setAttribute("height", canvas.height);
+            background.setAttribute("fill", params.bgColor);
+            svg.appendChild(background);
+            
+            // 绘制所有条形 - 使用更兼容的方式
+            const numBars = 11;
+            const maxBarWidth = params.bottomWidth;
+            const minBarWidth = params.topWidth;
+            const spacing = params.spacing;
+            const totalWidth = numBars * (maxBarWidth + spacing) - spacing;
+            
+            // 根据对齐方式调整起始X坐标
+            let startX;
+            switch(params.alignment) {
+                case 'left':
+                    startX = 20; // 左对齐
+                    break;
+                case 'center':
+                    startX = (canvas.width - totalWidth) / 2; // 居中对齐
+                    break;
+                case 'right':
+                    startX = canvas.width - totalWidth - 20; // 右对齐
+                    break;
+                default:
+                    startX = (canvas.width - totalWidth) / 2; // 默认居中
+            }
+            
+            for (let i = 0; i < numBars; i++) {
+                const phaseOffset = i * params.phaseOffset;
+                // 使用专用方法，确保兼容AI
+                addCompatibleBarToSVG(
+                    svg,
+                    startX + i * (maxBarWidth + spacing),
+                    maxBarWidth,
+                    minBarWidth,
+                    phaseOffset,
+                    i // 传递条形索引
+                );
+            }
+            
+            // 添加底部白色区域
+            const bottomArea = document.createElementNS(svgNS, "rect");
+            bottomArea.setAttribute("x", 0);
+            bottomArea.setAttribute("y", canvas.height - 50);
+            bottomArea.setAttribute("width", canvas.width);
+            bottomArea.setAttribute("height", 50);
+            bottomArea.setAttribute("fill", "white");
+            svg.appendChild(bottomArea);
+            
+            // 添加标签
+            const labels = [
+                "linea/graph", 
+                "improviso", 
+                "mutari", 
+                "apparire", 
+                "strutturasi", 
+                "simbolo", 
+                "stabilito", 
+                "irrimediabile", 
+                "segreto", 
+                "nero", 
+                "qualità"
+            ];
+            
+            const visibleLabels = [0, 5, 6, 7, 8, 9];
+            
+            for (let i = 0; i < visibleLabels.length; i++) {
+                const index = visibleLabels[i];
+                if (index < labels.length) {
+                    const x = startX + index * (maxBarWidth + spacing) + maxBarWidth/2;
+                    const y = canvas.height - 25;
+                    
+                    const text = document.createElementNS(svgNS, "text");
+                    text.setAttribute("x", x);
+                    text.setAttribute("y", y);
+                    text.setAttribute("text-anchor", "middle");
+                    text.setAttribute("font-family", "Arial");
+                    text.setAttribute("font-size", "8px");
+                    text.setAttribute("fill", "black");
+                    text.textContent = labels[index];
+                    svg.appendChild(text);
+                }
+            }
+            
+            // 添加右下角标签
+            const cornerText = document.createElementNS(svgNS, "text");
+            cornerText.setAttribute("x", canvas.width - 12);
+            cornerText.setAttribute("y", canvas.height - 12);
+            cornerText.setAttribute("text-anchor", "end");
+            cornerText.setAttribute("font-family", "Arial");
+            cornerText.setAttribute("font-size", "8px");
+            cornerText.setAttribute("fill", "black");
+            cornerText.textContent = "xxxx";
+            svg.appendChild(cornerText);
+            
+            // 序列化SVG并下载
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const svgBlob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
+            const svgUrl = URL.createObjectURL(svgBlob);
+            
+            const downloadLink = document.createElement("a");
+            downloadLink.href = svgUrl;
+            downloadLink.download = "wave_bars_ai_compatible_" + new Date().toISOString().slice(0,19).replace(/:/g,"-") + ".svg";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            
+            // 清理
+            URL.revokeObjectURL(svgUrl);
+        }
+
+        // 用于AI兼容的SVG条形添加方法
+        function addCompatibleBarToSVG(svg, baseX, maxWidth, minWidth, phaseOffset, barIndex) {
+            const svgNS = "http://www.w3.org/2000/svg";
+            const numSegments = params.segments;
+            const segmentHeight = params.segmentHeight;
+            const verticalSpacing = params.verticalSpacing; // 添加垂直间距
+            
+            // 使用params中的基础宽度比例配置
+            const baseWidthRatios = params.baseWidthRatios;
+            
+            // 和原始方法相同的计算
+            const wavePhase = animationTime + phaseOffset;
+            const waveFactor = Math.sin(wavePhase) * params.amplitude;
+            
+            // 绘制每个分段
+            for (let i = 0; i < numSegments; i++) {
+                const normPosition = i / (numSegments - 1);
+                
+                // 根据位置决定宽度变化方向
+                let widthModifier;
+                if (normPosition < 0.5) {
+                    const effect = mapValue(normPosition, 0, 0.5, 1.0, 0.0);
+                    widthModifier = waveFactor * effect * 0.8;
+                } else {
+                    const effect = mapValue(normPosition, 0.5, 1.0, 0.0, 1.0);
+                    widthModifier = -waveFactor * effect * 0.8;
+                }
+                
+                // 动态获取基础宽度比例
+                let baseRatio;
+                if (i < baseWidthRatios.length) {
+                    baseRatio = baseWidthRatios[i];
+                } else {
+                    baseRatio = i / (numSegments - 1);
+                }
+                
+                // 添加随机性 - 这会影响宽度过渡的规则性
+                if (params.randomness > 0) {
+                    // 使用持久性随机数，基于段索引和条索引
+                    const randomSeed = (i * 0.1 + phaseOffset * 0.5) * 100;
+                    const pseudoRandom = Math.sin(randomSeed) * 0.5 + 0.5; // 0-1范围的伪随机数
+                    
+                    // 规则性越高，扰动越大
+                    const randomFactor = (pseudoRandom * 2 - 1) * params.randomness * 0.5;
+                    baseRatio = baseRatio * (1 + randomFactor);
+                    
+                    // 确保基础比例在合理范围内
+                    baseRatio = Math.max(0.1, Math.min(baseRatio, 1.2));
+                }
+                
+                // 应用变化到基础宽度比例
+                let widthRatio = baseRatio + widthModifier;
+                widthRatio = Math.max(0.1, Math.min(widthRatio, 1.5));
+                
+                // 计算实际宽度和位置
+                const segmentWidth = minWidth + (maxWidth - minWidth) * widthRatio;
+                
+                // 根据对齐方式计算X位置
+                let segmentX;
+                switch(params.alignment) {
+                    case 'left':
+                        segmentX = baseX; // 左对齐
+                        break;
+                    case 'center':
+                        segmentX = baseX + (maxWidth - segmentWidth) / 2; // 居中对齐
+                        break;
+                    case 'right':
+                        segmentX = baseX + (maxWidth - segmentWidth); // 右对齐
+                        break;
+                    default:
+                        segmentX = baseX; // 默认左对齐
+                }
+                
+                // 使用垂直间距计算Y位置
+                const segmentY = 30 + i * (segmentHeight + verticalSpacing);
+                
+                // 创建形状元素
+                let shapeElement;
+                const size = Math.min(segmentWidth, segmentHeight);
+                const centerX = segmentX + segmentWidth / 2;
+                const centerY = segmentY + segmentHeight / 2;
+                
+                switch(params.shape) {
+                    case 'triangle':
+                        shapeElement = document.createElementNS(svgNS, "polygon");
+                        const points = `${centerX},${segmentY} ${segmentX + segmentWidth},${segmentY + segmentHeight} ${segmentX},${segmentY + segmentHeight}`;
+                        shapeElement.setAttribute("points", points);
+                        break;
+                    
+                    case 'circle':
+                        shapeElement = document.createElementNS(svgNS, "ellipse");
+                        shapeElement.setAttribute("cx", centerX);
+                        shapeElement.setAttribute("cy", centerY);
+                        shapeElement.setAttribute("rx", segmentWidth / 2);
+                        shapeElement.setAttribute("ry", segmentHeight / 2);
+                        break;
+                        
+                    case 'custom':
+                        if (customShapeImage) {
+                            // 创建SVG组元素用于容纳自定义图形
+                            const gElement = document.createElementNS(svgNS, "g");
+                            
+                            // 获取图像数据并将其直接嵌入SVG中
+                            const imageData = customShapeImage.src;
+                            
+                            // 计算图像尺寸
+                            const imageAspectRatio = customShapeImage.width / customShapeImage.height;
+                            let drawWidth, drawHeight;
+                            
+                            if (imageAspectRatio > 1) {
+                                drawWidth = size;
+                                drawHeight = size / imageAspectRatio;
+                            } else {
+                                drawHeight = size;
+                                drawWidth = size * imageAspectRatio;
+                            }
+                            
+                            // 创建image元素并嵌入数据
+                            const imageElement = document.createElementNS(svgNS, "image");
+                            imageElement.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", imageData);
+                            imageElement.setAttribute("width", drawWidth);
+                            imageElement.setAttribute("height", drawHeight);
+                            imageElement.setAttribute("x", centerX - drawWidth/2);
+                            imageElement.setAttribute("y", centerY - drawHeight/2);
+                            imageElement.setAttribute("preserveAspectRatio", "xMidYMid meet");
+                            
+                            gElement.appendChild(imageElement);
+                            
+                            // 如果需要缩放
+                            const scaleX = segmentWidth / size;
+                            const scaleY = segmentHeight / size;
+                            
+                            if (scaleX !== 1 || scaleY !== 1) {
+                                gElement.setAttribute("transform", `matrix(${scaleX}, 0, 0, ${scaleY}, ${centerX * (1 - scaleX)}, ${centerY * (1 - scaleY)})`);
+                            }
+                            
+                            // 应用旋转
+                            if (params.rotation !== 0) {
+                                const currentTransform = gElement.getAttribute("transform") || "";
+                                gElement.setAttribute("transform", 
+                                    `${currentTransform} rotate(${params.rotation}, ${centerX}, ${centerY})`);
+                            }
+                            
+                            shapeElement = gElement;
+                        } else {
+                            shapeElement = document.createElementNS(svgNS, "rect");
+                            shapeElement.setAttribute("x", segmentX);
+                            shapeElement.setAttribute("y", segmentY);
+                            shapeElement.setAttribute("width", segmentWidth);
+                            shapeElement.setAttribute("height", segmentHeight);
+                        }
+                        break;
+                        
+                    case 'square':
+                    default:
+                        if (params.cornerRadius > 0) {
+                            shapeElement = document.createElementNS(svgNS, "rect");
+                            shapeElement.setAttribute("x", segmentX);
+                            shapeElement.setAttribute("y", segmentY);
+                            shapeElement.setAttribute("width", segmentWidth);
+                            shapeElement.setAttribute("height", segmentHeight);
+                            shapeElement.setAttribute("rx", params.cornerRadius);
+                            shapeElement.setAttribute("ry", params.cornerRadius);
+                        } else {
+                            shapeElement = document.createElementNS(svgNS, "rect");
+                            shapeElement.setAttribute("x", segmentX);
+                            shapeElement.setAttribute("y", segmentY);
+                            shapeElement.setAttribute("width", segmentWidth);
+                            shapeElement.setAttribute("height", segmentHeight);
+                        }
+                        break;
+                }
+                
+                // 设置样式
+                shapeElement.setAttribute("fill", params.shapeColor);
+                if (params.opacity < 1) {
+                    shapeElement.setAttribute("fill-opacity", params.opacity);
+                }
+                
+                if (params.showBorder) {
+                    shapeElement.setAttribute("stroke", "#FF0000");
+                    shapeElement.setAttribute("stroke-opacity", "0.3");
+                    shapeElement.setAttribute("stroke-width", "0.5");
+                }
+                
+                // 应用旋转
+                if (params.rotation !== 0 && params.shape !== 'custom') {
+                    shapeElement.setAttribute("transform", `rotate(${params.rotation}, ${centerX}, ${centerY})`);
+                }
+                
+                svg.appendChild(shapeElement);
+            }
+        }
+        
+        // 导出为PNG图像（完全一致的视觉效果）
+        function exportPNG() {
+            // 临时创建一个新的Canvas来绘制当前图像
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // 复制当前屏幕的内容到临时Canvas
+            tempCtx.drawImage(canvas, 0, 0);
+            
+            // 转换为PNG并下载
+            const pngUrl = tempCanvas.toDataURL('image/png');
+            
+            const downloadLink = document.createElement("a");
+            downloadLink.href = pngUrl;
+            downloadLink.download = "wave_bars_" + new Date().toISOString().slice(0,19).replace(/:/g,"-") + ".png";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+        
+        // 获取UI控件值并添加事件监听器
+        document.getElementById('cornerRadius').addEventListener('input', function() {
+            params.cornerRadius = parseFloat(this.value);
+            document.getElementById('cornerRadius-value').textContent = params.cornerRadius.toFixed(1);
+            draw();
+        });
+        
+        document.getElementById('topWidth').addEventListener('input', function() {
+            params.topWidth = parseInt(this.value);
+            document.getElementById('topWidth-value').textContent = params.topWidth;
+            draw();
+        });
+        
+        document.getElementById('bottomWidth').addEventListener('input', function() {
+            params.bottomWidth = parseInt(this.value);
+            document.getElementById('bottomWidth-value').textContent = params.bottomWidth;
+            draw();
+        });
+        
+        document.getElementById('segmentHeight').addEventListener('input', function() {
+            params.segmentHeight = parseFloat(this.value);
+            document.getElementById('segmentHeight-value').textContent = params.segmentHeight;
+            draw();
+        });
+        
+        document.getElementById('segments').addEventListener('input', function() {
+            params.segments = parseInt(this.value);
+            document.getElementById('segments-value').textContent = params.segments;
+            draw();
+        });
+        
+        document.getElementById('spacing').addEventListener('input', function() {
+            params.spacing = parseInt(this.value);
+            document.getElementById('spacing-value').textContent = params.spacing;
+            draw();
+        });
+        
+        document.getElementById('verticalSpacing').addEventListener('input', function() {
+            params.verticalSpacing = parseInt(this.value);
+            document.getElementById('verticalSpacing-value').textContent = params.verticalSpacing;
+            draw();
+        });
+        
+        document.getElementById('amplitude').addEventListener('input', function() {
+            params.amplitude = parseFloat(this.value);
+            document.getElementById('amplitude-value').textContent = params.amplitude.toFixed(2);
+            draw();
+        });
+        
+        document.getElementById('phaseOffset').addEventListener('input', function() {
+            params.phaseOffset = parseFloat(this.value);
+            document.getElementById('phaseOffset-value').textContent = params.phaseOffset.toFixed(1);
+            draw();
+        });
+        
+        document.getElementById('randomness').addEventListener('input', function() {
+            params.randomness = parseFloat(this.value);
+            document.getElementById('randomness-value').textContent = params.randomness.toFixed(2);
+            draw();
+        });
+        
+        document.getElementById('opacity').addEventListener('input', function() {
+            params.opacity = parseFloat(this.value);
+            document.getElementById('opacity-value').textContent = params.opacity.toFixed(2);
+            draw();
+        });
+        
+        document.getElementById('rotation').addEventListener('input', function() {
+            params.rotation = parseInt(this.value);
+            document.getElementById('rotation-value').textContent = params.rotation;
+            draw();
+        });
+        
+        document.getElementById('showBorder').addEventListener('change', function() {
+            params.showBorder = this.checked;
+            draw();
+        });
+        
+        document.getElementById('speed').addEventListener('input', function() {
+            params.speed = parseFloat(this.value);
+            document.getElementById('speed-value').textContent = params.speed.toFixed(3);
+        });
+        
+        document.getElementById('reset').addEventListener('click', function() {
+            params.speed = 0.035;
+            params.shape = 'square';
+            params.cornerRadius = 0;
+            params.topWidth = 6;
+            params.bottomWidth = 40;
+            params.segmentHeight = 77.5;
+            params.segments = 8;
+            params.spacing = 10;
+            params.verticalSpacing = 0;
+            params.amplitude = 0.5;
+            params.phaseOffset = 0.7;
+            params.randomness = 0;
+            params.opacity = 1.0;
+            params.rotation = 0;
+            params.shapeColor = "#000000";
+            params.bgColor = "#f0f0f0";
+            params.showBorder = true;
+            params.alignment = 'left';
+            params.baseWidthRatios = [0.20, 0.25, 0.35, 0.50, 0.70, 0.85, 0.95, 1.00];
+            
+            // 更新所有控件的值
+            document.getElementById('speed').value = params.speed;
+            document.getElementById('speed-value').textContent = params.speed.toFixed(3);
+            document.getElementById('cornerRadius').value = params.cornerRadius;
+            document.getElementById('cornerRadius-value').textContent = params.cornerRadius.toFixed(1);
+            document.getElementById('topWidth').value = params.topWidth;
+            document.getElementById('topWidth-value').textContent = params.topWidth;
+            document.getElementById('bottomWidth').value = params.bottomWidth;
+            document.getElementById('bottomWidth-value').textContent = params.bottomWidth;
+            document.getElementById('segmentHeight').value = params.segmentHeight;
+            document.getElementById('segmentHeight-value').textContent = params.segmentHeight;
+            document.getElementById('segments').value = params.segments;
+            document.getElementById('segments-value').textContent = params.segments;
+            document.getElementById('spacing').value = params.spacing;
+            document.getElementById('spacing-value').textContent = params.spacing;
+            document.getElementById('verticalSpacing').value = params.verticalSpacing;
+            document.getElementById('verticalSpacing-value').textContent = params.verticalSpacing;
+            document.getElementById('amplitude').value = params.amplitude;
+            document.getElementById('amplitude-value').textContent = params.amplitude.toFixed(2);
+            document.getElementById('phaseOffset').value = params.phaseOffset;
+            document.getElementById('phaseOffset-value').textContent = params.phaseOffset.toFixed(1);
+            document.getElementById('randomness').value = params.randomness;
+            document.getElementById('randomness-value').textContent = params.randomness.toFixed(2);
+            document.getElementById('opacity').value = params.opacity;
+            document.getElementById('opacity-value').textContent = params.opacity.toFixed(2);
+            document.getElementById('rotation').value = params.rotation;
+            document.getElementById('rotation-value').textContent = params.rotation;
+            document.getElementById('showBorder').checked = params.showBorder;
+            
+            document.body.style.backgroundColor = params.bgColor;
+            updateUI();
+            updateAlignButtons();
+            draw();
+        });
+        
+        // 添加对齐方式控件
+        document.getElementById('align-left').addEventListener('click', function() {
+            params.alignment = 'left';
+            updateAlignButtons();
+            draw();
+        });
+        
+        document.getElementById('align-center').addEventListener('click', function() {
+            params.alignment = 'center';
+            updateAlignButtons();
+            draw();
+        });
+        
+        document.getElementById('align-right').addEventListener('click', function() {
+            params.alignment = 'right';
+            updateAlignButtons();
+            draw();
+        });
+        
+        function updateAlignButtons() {
+            // 清除所有按钮的激活状态
+            document.querySelectorAll('.align-buttons button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // 设置当前对齐方式按钮的激活状态
+            document.getElementById('align-' + params.alignment).classList.add('active');
+        }
+        
+        // 初始化 UI 和开始绘制
+        updateUI();
+        updateAlignButtons();
+        
+        // 初始化播放/暂停按钮状态
+        if (isPlaying) {
+            playPauseButton.textContent = '暂停';
+            playPauseButton.className = 'btn-danger';
+        } else {
+            playPauseButton.textContent = '播放';
+            playPauseButton.className = 'btn-success';
+        }
+        
+        draw();
+    </script>
+</body>
+</html> 

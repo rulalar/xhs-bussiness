@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<!--
+直线绘制工具 - 自包含HTML文件
+版本: 1.0
+日期: 2023-05-20
+
+说明:
+- 此文件是完全自包含的，不需要任何外部资源
+- 所有CSS和JavaScript都内联在文件中
+- 双击HTML文件即可在任何现代浏览器中打开使用
+- 支持Chrome、Firefox、Edge等主流浏览器
+- 如果右侧控制面板不可见，请尝试点击页面右下角的"显示调试"按钮
+
+功能:
+- 绘制彩色直线
+- 调整线条粗细
+- 调整颜色权重
+- 自定义画布大小和背景色
+- 导出PNG和SVG格式
+-->
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="renderer" content="webkit">
+    <meta name="force-rendering" content="webkit">
+    <meta name="wap-font-scale" content="no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>直线绘制工具</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            width: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            justify-content: center;
+        }
+        
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 0;
+            position: relative;
+        }
+        
+        canvas {
+            display: block;
+            cursor: crosshair;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            transform-origin: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+        }
+        
+        .control-panel {
+            width: 320px;
+            min-width: 320px;
+            max-width: 320px;
+            background-color: #ffffff;
+            padding: 15px 15px 15px 15px;
+            margin-right: 30px;
+            height: 100vh;
+            overflow-y: auto;
+            box-sizing: border-box;
+            box-shadow: -2px 0 15px rgba(0, 0, 0, 0.08);
+            position: relative;
+            z-index: 100;
+        }
+        
+        .control-group {
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .control-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        h3 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            position: relative;
+            padding-left: 0;
+            text-transform: none;
+        }
+        
+        h3::before {
+            display: none;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-size: 12px;
+            font-weight: 500;
+            text-align: left;
+        }
+        
+        input {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            color: #333;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #5568FE;
+            box-shadow: 0 0 0 2px rgba(85, 104, 254, 0.2);
+        }
+        
+        button {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px 0;
+            background-color: #5568FE;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 12px;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button:hover {
+            background-color: #4457ED;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(85, 104, 254, 0.2);
+        }
+        
+        button:active {
+            transform: scale(0.98) translateY(0);
+            box-shadow: none;
+        }
+        
+        button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%, -50%);
+            transform-origin: 50% 50%;
+        }
+        
+        button:focus:not(:active)::after {
+            animation: ripple 0.5s ease-out;
+        }
+        
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0) translate(-50%, -50%);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20) translate(-50%, -50%);
+                opacity: 0;
+            }
+        }
+        
+        .slider-container {
+            margin-bottom: 8px;
+        }
+        
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            font-size: 11px;
+            text-align: left;
+        }
+        
+        .slider-value {
+            color: #333;
+            font-weight: 500;
+            background-color: transparent;
+            padding: 0;
+            border-radius: 0;
+            font-size: 14px;
+            text-align: left;
+        }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            margin: 10px 0 10px 0;
+            padding: 0;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #5568FE;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #5568FE;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+        
+        input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-input {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 6px;
+        }
+        
+        .color-input input[type="color"] {
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 4px;
+            background: none;
+            cursor: pointer;
+            margin-right: 8px;
+            padding: 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .color-input input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        
+        .color-input input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
+        
+        .color-input input[type="text"] {
+            flex-grow: 1;
+            margin-bottom: 0;
+            font-size: 11px;
+            padding: 6px;
+            background-color: white;
+            border: 1px solid #eee;
+        }
+        
+        .color-group {
+            margin-bottom: 12px;
+            width: 100%;
+        }
+        
+        .color-group-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .color-preview {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .button-group button {
+            margin-bottom: 0;
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            text-align: left;
+        }
+        
+        .checkbox-container input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+        }
+        
+        /* 隐藏数字输入框的箭头 */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        
+        @media (max-width: 1200px) {
+            body {
+                flex-direction: column !important;
+                -webkit-flex-direction: column !important;
+                -ms-flex-direction: column !important;
+                height: auto;
+                min-height: 100vh;
+            }
+            
+            .canvas-container {
+                width: 100% !important;
+                height: 60vh !important;
+                min-height: 300px;
+                max-height: 70vh;
+                flex-shrink: 0;
+            }
+            
+            .control-panel {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 100% !important;
+                height: auto !important;
+                max-height: none !important;
+                overflow-y: visible !important;
+                padding: 10px !important;
+                order: 2;
+            }
+            
+            canvas {
+                max-width: 100% !important;
+                max-height: 60vh !important;
+            }
+            
+            /* 在小屏幕上使控制组水平排列 */
+            .control-group {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+            }
+            
+            /* 控制组中的元素在小屏幕上占一半宽度 */
+            .slider-container, .color-group {
+                width: 48%;
+                min-width: 200px;
+            }
+        }
+        
+        /* 在超小屏幕上进一步优化布局 */
+        @media (max-width: 600px) {
+            .slider-container, .color-group {
+                width: 100%;
+            }
+        }
+        
+        .panel-toggle {
+            display: none;
+        }
+        
+        .fallback-layout {
+            width: 100%;
+            height: 100vh;
+            border-collapse: collapse;
+            table-layout: fixed;
+            display: none; /* 默认隐藏 */
+        }
+        
+        .fallback-layout td.canvas-cell {
+            width: calc(100% - 280px);
+            height: 100vh;
+            padding: 0;
+            vertical-align: middle;
+            text-align: center;
+        }
+        
+        .fallback-layout td.control-cell {
+            width: 280px;
+            height: 100vh;
+            padding: 0;
+            vertical-align: top;
+            background-color: white;
+        }
+        
+        /* 调整Safari特定样式 */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                overflow: hidden !important;
+                display: flex !important;
+            }
+            
+            .canvas-container {
+                flex: 1 !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                height: 100vh !important;
+                padding: 0 !important;
+            }
+            
+            .control-panel {
+                width: 320px !important;
+                min-width: 320px !important;
+                max-width: 320px !important;
+                height: 100vh !important;
+                overflow-y: auto !important;
+                margin-right: 30px !important;
+                padding: 15px !important;
+                position: relative !important;
+            }
+        }
+        
+        /* 强制显示控制面板，无论浏览器如何 */
+        .control-panel {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 320px !important;
+            min-width: 320px !important;
+            max-width: 320px !important;
+            position: relative !important;
+            z-index: 10 !important;
+            margin-right: 30px !important;
+        }
+        
+        .canvas-container {
+            width: auto !important;
+            max-width: calc(100% - 350px) !important; /* 320px + 30px */
+        }
+        
+        /* 针对Chrome的特殊修复 */
+        @media screen and (-webkit-min-device-pixel-ratio:0) {
+            body {
+                display: flex !important;
+                width: 100% !important;
+                height: 100vh !important;
+                flex-direction: row !important;
+                justify-content: center !important;
+                text-align: center !important;
+            }
+            
+            .canvas-container {
+                flex: 1 !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                height: 100vh !important;
+                padding: 20px !important;
+            }
+            
+            .control-panel {
+                width: 320px !important;
+                min-width: 320px !important;
+                max-width: 320px !important;
+                height: 100vh !important;
+                margin-right: 30px !important;
+                flex: none !important;
+            }
+        }
+        
+        /* 添加两列布局的CSS样式 */
+        .color-inputs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .color-group {
+            margin-bottom: 12px;
+            width: 100%;
+        }
+        
+        /* 导出区域的特殊按钮样式 */
+        #export-png {
+            background-color: #4CAF50;
+        }
+        
+        #export-png:hover {
+            background-color: #3e9142;
+        }
+        
+        #export-svg {
+            background-color: #FF9800;
+        }
+        
+        #export-svg:hover {
+            background-color: #e68900;
+        }
+        
+        #clear-canvas {
+            background-color: #f44336;
+        }
+        
+        #clear-canvas:hover {
+            background-color: #d32f2f;
+        }
+        
+        #apply-canvas {
+            background-color: #2196F3;
+        }
+        
+        #apply-canvas:hover {
+            background-color: #0b7dda;
+        }
+        
+        /* 画布设置中的范围控制改为滑块样式 */
+        .range-control {
+            margin-bottom: 8px;
+        }
+        
+        .range-control label {
+            display: block;
+            margin-bottom: 5px;
+            text-align: left;
+        }
+        
+        .range-control span {
+            color: #5568FE;
+            font-weight: 600;
+            background-color: rgba(85, 104, 254, 0.08);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            display: inline-block;
+            margin-left: 5px;
+            vertical-align: middle;
+            text-align: left;
+        }
+        
+        /* 新增控件样式 - 参考图片中的样式 */
+        .parameter-item {
+            margin-bottom: 10px;
+        }
+        
+        .parameter-item label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+            font-weight: normal;
+            text-align: left;
+        }
+        
+        .parameter-value {
+            float: right;
+            color: #333;
+            font-size: 14px;
+            text-align: left;
+        }
+        
+        .shape-selector {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e5e5e5;
+            border-radius: 4px;
+            background-color: #fff;
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .color-block {
+            width: 100%;
+            height: 24px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <table id="fallback-layout" class="fallback-layout">
+        <tr>
+            <td class="canvas-cell" id="canvas-cell"></td>
+            <td class="control-cell" id="control-cell"></td>
+        </tr>
+    </table>
+
+    <div class="canvas-container">
+        <canvas id="canvas"></canvas>
+    </div>
+    
+    <div class="control-panel">
+        <div class="control-group">
+            <h3>调色板设置</h3>
+            <div id="color-inputs" class="color-inputs-grid">
+                <div class="color-group">
+                    <div class="color-input">
+                        <input type="color" id="color1" value="#00FFF6">
+                        <input type="text" id="color1-text" value="#00FFF6" placeholder="颜色代码">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <label for="weight1">颜色权重</label>
+                            <span id="weight1-display" class="slider-value">100</span>
+                        </div>
+                        <input type="range" id="weight1" min="0" max="100" value="100" step="1">
+                    </div>
+                </div>
+                
+                <div class="color-group">
+                    <div class="color-input">
+                        <input type="color" id="color2" value="#E0E6F8">
+                        <input type="text" id="color2-text" value="#E0E6F8" placeholder="颜色代码">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <label for="weight2">颜色权重</label>
+                            <span id="weight2-display" class="slider-value">100</span>
+                        </div>
+                        <input type="range" id="weight2" min="0" max="100" value="100" step="1">
+                    </div>
+                </div>
+                
+                <div class="color-group">
+                    <div class="color-input">
+                        <input type="color" id="color3" value="#4DB8FF">
+                        <input type="text" id="color3-text" value="#4DB8FF" placeholder="颜色代码">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <label for="weight3">颜色权重</label>
+                            <span id="weight3-display" class="slider-value">100</span>
+                        </div>
+                        <input type="range" id="weight3" min="0" max="100" value="100" step="1">
+                    </div>
+                </div>
+                
+                <div class="color-group">
+                    <div class="color-input">
+                        <input type="color" id="color4" value="#6C4EFF">
+                        <input type="text" id="color4-text" value="#6C4EFF" placeholder="颜色代码">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <label for="weight4">颜色权重</label>
+                            <span id="weight4-display" class="slider-value">100</span>
+                        </div>
+                        <input type="range" id="weight4" min="0" max="100" value="100" step="1">
+                    </div>
+                </div>
+                
+                <div class="color-group">
+                    <div class="color-input">
+                        <input type="color" id="color5" value="#F54236">
+                        <input type="text" id="color5-text" value="#F54236" placeholder="颜色代码">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <label for="weight5">颜色权重</label>
+                            <span id="weight5-display" class="slider-value">100</span>
+                        </div>
+                        <input type="range" id="weight5" min="0" max="100" value="100" step="1">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <h3>线条和画布设置</h3>
+            <div class="slider-container">
+                <div class="slider-header">
+                    <label for="line-width">线条粗细</label>
+                    <span id="line-width-display" class="slider-value">6</span>
+                </div>
+                <input type="range" id="line-width" min="1" max="30" value="6" step="1">
+            </div>
+            
+            <div class="range-control">
+                <label for="width-range">宽度: <span id="width-value">600</span></label>
+                <input type="range" id="width-range" min="300" max="2000" value="600" step="1">
+            </div>
+            <div class="range-control">
+                <label for="height-range">高度: <span id="height-value">600</span></label>
+                <input type="range" id="height-range" min="300" max="2000" value="600" step="1">
+            </div>
+            
+            <div class="color-input">
+                <input type="color" id="bg-color" value="#000000">
+                <input type="text" id="bg-color-text" value="#000000" placeholder="背景颜色代码">
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <h3>圆点设置</h3>
+            <div class="parameter-item">
+                <label>圆点大小 <span class="parameter-value">5</span></label>
+                <input type="range" id="dot-size" min="1" max="20" value="5" step="1">
+            </div>
+            
+            <div class="parameter-item">
+                <label>密集度 <span class="parameter-value">47</span></label>
+                <input type="range" id="density" min="1" max="100" value="47" step="1">
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="margin-bottom: 8px; display: block;">圆点形状</label>
+                    <select class="shape-selector" id="dot-shape" style="margin-bottom: 10px;">
+                        <option value="circle">圆形</option>
+                        <option value="square">方形</option>
+                        <option value="triangle">三角形</option>
+                    </select>
+                </div>
+                
+                <div style="flex: 1;">
+                    <label style="margin-bottom: 8px; display: block;">透明度 <span class="parameter-value">0.7</span></label>
+                    <input type="range" id="dot-opacity" min="0" max="1" value="0.7" step="0.1" style="margin-bottom: 10px;">
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="margin-bottom: 8px; display: block;">圆点颜色</label>
+                    <div class="color-block" id="dot-color-block" style="background-color: #6C4EFF; height: 24px; margin-bottom: 10px;"></div>
+                </div>
+                
+                <div style="flex: 1;">
+                    <label style="margin-bottom: 8px; display: block;">背景颜色</label>
+                    <div class="color-block" id="bg-color-block" style="background-color: #522700; height: 24px; margin-bottom: 10px;"></div>
+                </div>
+            </div>
+            
+            <div class="checkbox-container">
+                <input type="checkbox" id="transparent-bg" checked>
+                <label for="transparent-bg">使用透明背景</label>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <h3>高级设置</h3>
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label style="margin-bottom: 8px; display: block;">扩散因子 <span class="parameter-value">8</span></label>
+                    <input type="range" id="diffusion" min="0" max="20" value="8" step="1" style="margin-bottom: 10px;">
+                </div>
+                
+                <div style="flex: 1;">
+                    <label style="margin-bottom: 8px; display: block;">亮度阈值 <span class="parameter-value">120</span></label>
+                    <input type="range" id="brightness" min="0" max="255" value="120" step="1" style="margin-bottom: 10px;">
+                </div>
+            </div>
+        </div>
+        
+        <div class="control-group" style="margin-bottom: 0; border-bottom: none;">
+            <h3>导出</h3>
+            <div class="button-group">
+                <button id="export-png" style="background-color: #6C4EFF;">下载PNG</button>
+                <button id="export-svg" style="background-color: #6C4EFF;">下载SVG</button>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button id="apply-canvas" style="background-color: #2196F3; flex: 1;">应用设置</button>
+                <button id="clear-canvas" style="background-color: #f44336; flex: 1;">重置</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-message" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 5000; font-size: 18px; transition: opacity 0.5s;">
+        <div style="font-size: 24px; margin-bottom: 20px;">正在加载绘图工具...</div>
+        <div style="width: 200px; height: 5px; background: #333; border-radius: 3px; overflow: hidden; position: relative;">
+            <div id="loading-bar" style="width: 0%; height: 100%; background: #5568FE; position: absolute; left: 0; top: 0; transition: width 0.5s;"></div>
+        </div>
+        <div style="margin-top: 30px; font-size: 14px;">
+            如果控制面板不可见，请点击右下角的"显示调试"按钮
+        </div>
+    </div>
+
+    <div id="debug-log" style="display: none; position: fixed; bottom: 10px; left: 10px; max-width: 400px; max-height: 200px; overflow: auto; background-color: rgba(0,0,0,0.7); color: white; font-size: 12px; padding: 10px; z-index: 5000; border-radius: 4px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span>调试日志</span>
+            <a href="#" onclick="document.getElementById('debug-log').style.display='none'; return false;" style="color: white; text-decoration: none;">关闭</a>
+        </div>
+        <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.3); margin: 5px 0;">
+    </div>
+
+    <script>
+        // 进度条动画
+        let progress = 0;
+        const loadingInterval = setInterval(() => {
+            progress += 5;
+            if (progress > 100) {
+                clearInterval(loadingInterval);
+                return;
+            }
+            const bar = document.getElementById('loading-bar');
+            if (bar) bar.style.width = `${progress}%`;
+        }, 100);
+    </script>
+
+    <script>
+        try {
+            // 创建调试日志函数
+            function debugLog(message) {
+                console.log(message);
+                const logContainer = document.getElementById('debug-log');
+                if (logContainer) {
+                    const logEntry = document.createElement('div');
+                    logEntry.textContent = message;
+                    logContainer.appendChild(logEntry);
+                }
+            }
+            
+            // 完全重写布局初始化逻辑
+            function initLayout() {
+                debugLog("初始化布局...");
+                
+                // 获取元素
+                const body = document.body;
+                const canvasContainer = document.querySelector('.canvas-container');
+                const controlPanel = document.querySelector('.control-panel');
+                const canvas = document.getElementById('canvas');
+                
+                // 强制设置body样式
+                body.style.margin = '0';
+                body.style.padding = '0';
+                body.style.overflow = 'hidden';
+                body.style.position = 'fixed';
+                body.style.top = '0';
+                body.style.left = '0';
+                body.style.right = '0';
+                body.style.bottom = '0';
+                body.style.display = 'flex';
+                
+                // 设置画布容器样式
+                canvasContainer.style.flex = '1';
+                canvasContainer.style.display = 'flex';
+                canvasContainer.style.justifyContent = 'center';
+                canvasContainer.style.alignItems = 'center';
+                canvasContainer.style.height = '100vh';
+                canvasContainer.style.padding = '0';
+                canvasContainer.style.position = 'relative';
+                
+                // 设置控制面板样式
+                controlPanel.style.width = '320px';
+                controlPanel.style.minWidth = '320px';
+                controlPanel.style.maxWidth = '320px';
+                controlPanel.style.height = '100vh';
+                controlPanel.style.backgroundColor = '#ffffff';
+                controlPanel.style.padding = '15px';
+                controlPanel.style.boxSizing = 'border-box';
+                controlPanel.style.overflowY = 'auto';
+                controlPanel.style.boxShadow = '-2px 0 15px rgba(0, 0, 0, 0.08)';
+                controlPanel.style.marginRight = '30px';
+                controlPanel.style.position = 'relative';
+                controlPanel.style.zIndex = '100';
+                
+                // Safari特殊处理
+                if (isSafari) {
+                    debugLog("应用Safari特定布局");
+                    // 额外的Safari样式
+                    body.style.webkitOverflowScrolling = 'touch';
+                    controlPanel.style.webkitOverflowScrolling = 'touch';
+                }
+                
+                debugLog("布局初始化完成");
+            }
+            
+            // 在页面加载后立即初始化布局
+            window.addEventListener('load', function() {
+                debugLog("页面加载完成");
+                initLayout();
+                setTimeout(function() {
+                    // 再次应用确保布局正确
+                    initLayout();
+                }, 100);
+            });
+        } catch (error) {
+            console.error("初始化错误:", error);
+        }
+
+        // 添加立即执行代码
+        // 立即初始化布局，确保控制面板正确显示
+        setTimeout(function() {
+            debugLog("执行立即布局初始化");
+            initLayout();
+        }, 0);
+
+        // 多次调用以确保布局正确
+        setTimeout(function() {
+            debugLog("确保布局正确");
+            initLayout();
+        }, 1000);
+
+        // 初始化变量
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext('2d');
+        let lines = [];
+        let currentLine = null;
+        let isDrawing = false;
+        
+        // 调色板
+        let palette = [
+            '#00FFF6',
+            '#E0E6F8',
+            '#4DB8FF',
+            '#6C4EFF',
+            '#F54236'
+        ];
+        
+        // 颜色权重
+        let weights = [100, 100, 100, 100, 100];
+        
+        // 背景颜色
+        let bgColor = '#000000';
+        
+        // 线条粗细
+        let lineWidth = 6;
+        
+        // 同步颜色输入框和权重
+        function syncColorInputs() {
+            for (let i = 1; i <= 5; i++) {
+                const colorInput = document.getElementById(`color${i}`);
+                const textInput = document.getElementById(`color${i}-text`);
+                const weightSlider = document.getElementById(`weight${i}`);
+                const weightDisplay = document.getElementById(`weight${i}-display`);
+                
+                colorInput.addEventListener('input', () => {
+                    textInput.value = colorInput.value;
+                    updatePalette();
+                });
+                
+                textInput.addEventListener('input', () => {
+                    // 验证颜色格式
+                    if (/^#[0-9A-F]{6}$/i.test(textInput.value)) {
+                        colorInput.value = textInput.value;
+                        updatePalette();
+                    }
+                });
+                
+                // 权重控制
+                weightSlider.addEventListener('input', () => {
+                    const value = weightSlider.value;
+                    weightDisplay.textContent = value;
+                    weights[i-1] = parseInt(value);
+                });
+            }
+            
+            // 背景颜色同步
+            const bgColorInput = document.getElementById('bg-color');
+            const bgColorText = document.getElementById('bg-color-text');
+            
+            bgColorInput.addEventListener('input', () => {
+                bgColorText.value = bgColorInput.value;
+                bgColor = bgColorInput.value;
+                redraw();
+            });
+            
+            bgColorText.addEventListener('input', () => {
+                if (/^#[0-9A-F]{6}$/i.test(bgColorText.value)) {
+                    bgColorInput.value = bgColorText.value;
+                    bgColor = bgColorInput.value;
+                    redraw();
+                }
+            });
+            
+            // 同步线条粗细控制
+            const lineWidthSlider = document.getElementById('line-width');
+            const lineWidthDisplay = document.getElementById('line-width-display');
+            
+            lineWidthSlider.addEventListener('input', () => {
+                const value = lineWidthSlider.value;
+                lineWidthDisplay.textContent = value;
+                lineWidth = parseInt(value);
+                updateAllLinesWidth(lineWidth);
+                redraw();
+            });
+            
+            // 画布尺寸控制
+            const widthRange = document.getElementById('width-range');
+            const widthValue = document.getElementById('width-value');
+            
+            widthRange.addEventListener('input', () => {
+                const value = widthRange.value;
+                widthValue.textContent = value;
+            });
+            
+            const heightRange = document.getElementById('height-range');
+            const heightValue = document.getElementById('height-value');
+            
+            heightRange.addEventListener('input', () => {
+                const value = heightRange.value;
+                heightValue.textContent = value;
+            });
+        }
+        
+        // 更新调色板
+        function updatePalette() {
+            palette = [];
+            for (let i = 1; i <= 5; i++) {
+                palette.push(document.getElementById(`color${i}`).value);
+            }
+        }
+        
+        // 根据权重选择颜色
+        function getWeightedRandomColor() {
+            // 计算总权重
+            let totalWeight = 0;
+            for (let i = 0; i < weights.length; i++) {
+                totalWeight += weights[i];
+            }
+            
+            // 如果所有权重为0，则返回第一个颜色
+            if (totalWeight === 0) return palette[0];
+            
+            // 根据权重随机选择颜色
+            const random = Math.random() * totalWeight;
+            let weightSum = 0;
+            
+            for (let i = 0; i < weights.length; i++) {
+                weightSum += weights[i];
+                if (random < weightSum) {
+                    return palette[i];
+                }
+            }
+            
+            // 如果出现意外，返回最后一个颜色
+            return palette[palette.length - 1];
+        }
+        
+        // 添加对新控件的初始化和事件监听
+        function initExtendedControls() {
+            // 圆点大小控制
+            const dotSizeSlider = document.getElementById('dot-size');
+            const dotSizeValue = dotSizeSlider.parentNode.querySelector('.parameter-value');
+            
+            dotSizeSlider.addEventListener('input', () => {
+                dotSizeValue.textContent = dotSizeSlider.value;
+                // 这里可以添加具体的功能实现
+            });
+            
+            // 密集度控制
+            const densitySlider = document.getElementById('density');
+            const densityValue = densitySlider.parentNode.querySelector('.parameter-value');
+            
+            densitySlider.addEventListener('input', () => {
+                densityValue.textContent = densitySlider.value;
+                // 这里可以添加具体的功能实现
+            });
+            
+            // 圆点形状选择
+            const shapeSelector = document.getElementById('dot-shape');
+            shapeSelector.addEventListener('change', () => {
+                // 这里可以添加具体的功能实现
+            });
+            
+            // 圆点透明度控制
+            const opacitySlider = document.getElementById('dot-opacity');
+            const opacityValue = opacitySlider.parentNode.querySelector('.parameter-value');
+            
+            opacitySlider.addEventListener('input', () => {
+                opacityValue.textContent = opacitySlider.value;
+                // 这里可以添加具体的功能实现
+            });
+            
+            // 圆点颜色控制
+            const dotColorBlock = document.getElementById('dot-color-block');
+            dotColorBlock.addEventListener('click', () => {
+                // 创建一个隐藏的颜色选择器
+                const colorPicker = document.createElement('input');
+                colorPicker.type = 'color';
+                colorPicker.value = getComputedStyle(dotColorBlock).backgroundColor;
+                colorPicker.style.display = 'none';
+                document.body.appendChild(colorPicker);
+                
+                // 触发点击事件
+                colorPicker.click();
+                
+                // 监听颜色变化
+                colorPicker.addEventListener('input', () => {
+                    dotColorBlock.style.backgroundColor = colorPicker.value;
+                    // 这里可以添加具体的功能实现
+                });
+                
+                // 完成后移除元素
+                colorPicker.addEventListener('change', () => {
+                    document.body.removeChild(colorPicker);
+                });
+            });
+            
+            // 背景颜色控制
+            const bgColorBlock = document.getElementById('bg-color-block');
+            bgColorBlock.addEventListener('click', () => {
+                // 创建一个隐藏的颜色选择器
+                const colorPicker = document.createElement('input');
+                colorPicker.type = 'color';
+                colorPicker.value = getComputedStyle(bgColorBlock).backgroundColor;
+                colorPicker.style.display = 'none';
+                document.body.appendChild(colorPicker);
+                
+                // 触发点击事件
+                colorPicker.click();
+                
+                // 监听颜色变化
+                colorPicker.addEventListener('input', () => {
+                    bgColorBlock.style.backgroundColor = colorPicker.value;
+                    bgColor = colorPicker.value;
+                    redraw();
+                });
+                
+                // 完成后移除元素
+                colorPicker.addEventListener('change', () => {
+                    document.body.removeChild(colorPicker);
+                });
+            });
+            
+            // 透明背景复选框
+            const transparentBgCheckbox = document.getElementById('transparent-bg');
+            transparentBgCheckbox.addEventListener('change', () => {
+                // 这里可以添加具体的功能实现
+            });
+            
+            // 扩散因子控制
+            const diffusionSlider = document.getElementById('diffusion');
+            const diffusionValue = diffusionSlider.parentNode.querySelector('.parameter-value');
+            
+            diffusionSlider.addEventListener('input', () => {
+                diffusionValue.textContent = diffusionSlider.value;
+                // 这里可以添加具体的功能实现
+            });
+            
+            // 亮度阈值控制
+            const brightnessSlider = document.getElementById('brightness');
+            const brightnessValue = brightnessSlider.parentNode.querySelector('.parameter-value');
+            
+            brightnessSlider.addEventListener('input', () => {
+                brightnessValue.textContent = brightnessSlider.value;
+                // 这里可以添加具体的功能实现
+            });
+        }
+        
+        // 在初始化控制面板时调用这个函数
+        function initControlPanel() {
+            syncColorInputs();
+            initExtendedControls();
+            
+            // 应用画布设置
+            document.getElementById('apply-canvas').addEventListener('click', () => {
+                const width = parseInt(document.getElementById('width-range').value);
+                const height = parseInt(document.getElementById('height-range').value);
+                
+                if (width >= 300 && height >= 300) {
+                    canvas.width = width;
+                    canvas.height = height;
+                    setupCanvas();
+                    redraw();
+                }
+            });
+            
+            // 导出按钮
+            document.getElementById('export-png').addEventListener('click', savePNG);
+            document.getElementById('export-svg').addEventListener('click', saveSVG);
+            document.getElementById('clear-canvas').addEventListener('click', () => {
+                lines.length = 0;
+                redraw();
+            });
+        }
+        
+        // 直线类
+        class StraightLine {
+            constructor(x, y, color, width) {
+                this.start = { x, y };
+                this.end = { x, y };
+                this.strokeColor = color;
+                this.width = width;
+                this.originalWidth = width; // 保存原始宽度比例
+            }
+            
+            updateEnd(x, y) {
+                this.end.x = x;
+                this.end.y = y;
+            }
+            
+            // 更新线条粗细，基于全局线条粗细和原始比例
+            updateWidth(globalWidth) {
+                this.width = globalWidth;
+            }
+            
+            display() {
+                ctx.strokeStyle = this.strokeColor;
+                ctx.lineWidth = this.width;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(this.start.x, this.start.y);
+                ctx.lineTo(this.end.x, this.end.y);
+                ctx.stroke();
+            }
+        }
+        
+        // 设置画布尺寸
+        function setupCanvas() {
+            // 确保画布像素清晰
+            const dpr = window.devicePixelRatio || 1;
+            
+            // 获取容器的大小
+            const containerWidth = document.querySelector('.canvas-container').clientWidth;
+            const containerHeight = document.querySelector('.canvas-container').clientHeight;
+            
+            // 计算缩放比例，使画布适合容器
+            let scale = Math.min(
+                containerWidth / canvas.width,
+                containerHeight / canvas.height
+            ) * 0.9; // 预留更多边距，确保不超出
+            
+            // 确保缩放值不会太大，防止画布超出屏幕
+            if (scale * canvas.width > containerWidth * 0.9) {
+                scale = containerWidth * 0.9 / canvas.width;
+            }
+            
+            if (scale * canvas.height > containerHeight * 0.9) {
+                scale = containerHeight * 0.9 / canvas.height;
+            }
+            
+            // 应用缩放，保持像素锐利
+            canvas.style.transform = `scale(${scale})`;
+            canvas.style.transformOrigin = 'center';
+            
+            // 设置容器边距，确保画布居中显示
+            document.querySelector('.canvas-container').style.padding = '20px';
+            
+            debugLog(`画布尺寸: ${canvas.width}x${canvas.height}, 容器尺寸: ${containerWidth}x${containerHeight}, 缩放比例: ${scale}`);
+        }
+        
+        // 初始化
+        function init() {
+            isDrawing = false;
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+            
+            // 获取输入元素
+            const widthInput = document.getElementById('width-range');
+            const heightInput = document.getElementById('height-range');
+            
+            // 设置默认画布尺寸
+            canvasWidth = 600;
+            canvasHeight = 600;
+            
+            // 限制最大尺寸以适应屏幕
+            const maxWidth = window.innerWidth - 320 - 30; // 考虑控制面板320px和右侧距离30px
+            const maxHeight = window.innerHeight - 40; // 增加边距
+            
+            // 如果屏幕宽度小于1000px，进一步减小画布尺寸
+            if (window.innerWidth < 1000) {
+                canvasWidth = Math.min(canvasWidth, window.innerWidth - 250);
+            }
+
+            if (canvasWidth > maxWidth) canvasWidth = maxWidth;
+            if (canvasHeight > maxHeight) canvasHeight = maxHeight;
+            
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            
+            widthInput.value = canvasWidth;
+            heightInput.value = canvasHeight;
+            
+            // 更新宽高显示
+            document.getElementById('width-value').textContent = canvasWidth;
+            document.getElementById('height-value').textContent = canvasHeight;
+            
+            // 设置默认绘图样式
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#000000';
+            
+            // 清空画布
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 添加事件监听
+            canvas.addEventListener('mousedown', handleMouseDown);
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mouseup', handleMouseUp);
+            window.addEventListener('keydown', handleKeyPress);
+            window.addEventListener('resize', setupCanvas);
+            
+            document.getElementById('loading-message').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loading-message').style.display = 'none';
+            }, 500);
+            
+            // 应用布局初始化
+            initLayout();
+        }
+        
+        // 清空画布
+        function clearCanvas() {
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        // 重绘所有线
+        function redraw() {
+            clearCanvas();
+            for (const line of lines) {
+                line.display();
+            }
+            
+            if (currentLine) {
+                currentLine.display();
+            }
+        }
+        
+        // 鼠标事件处理
+        function handleMouseDown(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
+            
+            isDrawing = true;
+            
+            // 基于权重随机选择颜色
+            const randomColor = getWeightedRandomColor();
+            currentLine = new StraightLine(mouseX, mouseY, randomColor, lineWidth);
+            lines.push(currentLine);
+            
+            redraw();
+        }
+        
+        function handleMouseMove(e) {
+            if (!isDrawing || !currentLine) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
+            
+            currentLine.updateEnd(mouseX, mouseY);
+            redraw();
+        }
+        
+        function handleMouseUp() {
+            isDrawing = false;
+            currentLine = null;
+        }
+        
+        // 键盘事件处理
+        function handleKeyPress(e) {
+            // 如果当前焦点在输入框中，不执行快捷键
+            if (e.target.tagName === 'INPUT') {
+                return;
+            }
+            
+            // Z或Backspace撤销上一条线
+            if (e.key === 'z' || e.key === 'Z' || e.key === 'Backspace') {
+                if (lines.length > 0) {
+                    lines.pop();
+                    redraw();
+                }
+            }
+            
+            // S保存PNG
+            if (e.key === 's' || e.key === 'S') {
+                savePNG();
+            }
+            
+            // V保存SVG
+            if (e.key === 'v' || e.key === 'V') {
+                saveSVG();
+            }
+        }
+        
+        // 保存PNG
+        function savePNG() {
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = `drawing-${Date.now()}.png`;
+            link.click();
+            console.log('✅ PNG 已保存！');
+        }
+        
+        // 保存SVG
+        function saveSVG() {
+            const svgData = generateSVG();
+            const svgBlob = new Blob([svgData], {type: 'image/svg+xml'});
+            const url = URL.createObjectURL(svgBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `drawing-${Date.now()}.svg`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            console.log('✅ SVG 已保存！');
+        }
+        
+        // 生成SVG数据
+        function generateSVG() {
+            let svgContent = `<svg width="${canvas.width}" height="${canvas.height}" xmlns="http://www.w3.org/2000/svg">
+<rect width="100%" height="100%" fill="${bgColor}"/>
+`;
+            
+            for (const line of lines) {
+                svgContent += `<line x1="${line.start.x}" y1="${line.start.y}" x2="${line.end.x}" y2="${line.end.y}" stroke="${line.strokeColor}" stroke-width="${line.width}" stroke-linecap="round" />
+`;
+            }
+            
+            svgContent += '</svg>';
+            return svgContent;
+        }
+        
+        // 更新所有线条宽度的函数
+        function updateAllLinesWidth(newWidth) {
+            for (const line of lines) {
+                line.updateWidth(newWidth);
+            }
+        }
+        
+        // 检测是否为Safari浏览器
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        debugLog(`检测到浏览器: ${isSafari ? 'Safari' : '其他浏览器'}`);
+
+        if (isSafari) {
+            debugLog("应用Safari特定修复");
+            initLayout(); // 使用统一的布局初始化函数
+        }
+        
+        // 初始化应用
+        init();
+
+        // 调整尺寸的响应式代码
+        window.addEventListener('resize', function() {
+            // 检查画布是否超出屏幕，如果是则自动调整尺寸
+            const maxWidth = window.innerWidth - 320 - 30; // 考虑控制面板320px和右侧距离30px
+            const maxHeight = window.innerHeight - 40; // 增加边距
+            
+            if (canvas.width > maxWidth || canvas.height > maxHeight) {
+                let newWidth = canvas.width;
+                let newHeight = canvas.height;
+                
+                if (newWidth > maxWidth) newWidth = maxWidth;
+                if (newHeight > maxHeight) newHeight = maxHeight;
+                
+                // 创建临时画布保存当前内容
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(canvas, 0, 0);
+                
+                // 调整画布大小
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+                
+                // 重新绘制内容
+                ctx.drawImage(tempCanvas, 0, 0, newWidth, newHeight);
+                
+                // 更新控制器
+                document.getElementById('width-range').value = newWidth;
+                document.getElementById('height-range').value = newHeight;
+                document.getElementById('width-value').textContent = newWidth;
+                document.getElementById('height-value').textContent = newHeight;
+            }
+            
+            // 重新设置画布缩放以适应容器
+            setupCanvas();
+        });
+    </script>
+</body>
+</html> 

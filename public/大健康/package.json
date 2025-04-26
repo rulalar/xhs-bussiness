@@ -1,0 +1,23 @@
+{
+  "name": "3d-molecular-visualization",
+  "version": "1.0.0",
+  "description": "基于Three.js的3D分子可视化演示",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "three.js",
+    "3d",
+    "visualization",
+    "molecular",
+    "particles"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "engines": {
+    "node": ">=10.0.0"
+  }
+} 
