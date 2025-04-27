@@ -1,8 +1,8 @@
 [
   { "title": "大健康", "path": "./大健康/index.html" },
-  { "title": "交通", "path": "./交通/index.html" },
+  { "title": "游戏数码", "path": "./游戏数码/index.html" },
   { "title": "教育", "path": "./教育/index.html" },
   { "title": "潮流服饰", "path": "./潮流服饰/index.html" },
   { "title": "美妆个护", "path": "./美妆个护/index.html" },
-  { "title": "游戏数码", "path": "./游戏数码/index.html" }
+  { "title": "交通", "path": "./交通/index.html" }
 ] 
