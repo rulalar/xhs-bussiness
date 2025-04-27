@@ -13,76 +13,102 @@
             color: #333;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             padding: 20px;
-            border-radius: 10px;
+            border-radius: 15px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         h1 {
             text-align: center;
             color: #2c3e50;
+            margin-bottom: 20px;
         }
         .upload-section {
             text-align: center;
             margin: 20px 0;
-            padding: 30px;
+            padding: 15px;
             border: 2px dashed #ddd;
-            border-radius: 5px;
+            border-radius: 12px;
             cursor: pointer;
         }
         .upload-section:hover {
-            background-color: #f9f9f9;
+            background-color: #f5f5f5;
+            transition: all 0.3s ease;
         }
         #file-input {
             display: none;
         }
-        .preview-section {
+        .main-content {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
-            margin: 20px 0;
+            height: calc(100vh - 100px);
+            min-height: 600px;
         }
-        .original-image, .processed-image {
+        .image-section {
+            flex: 1.5;
+            min-width: 400px;
+            height: 100%;
+        }
+        .controls-section {
             flex: 1;
-            min-width: 300px;
-            text-align: center;
+            min-width: 250px;
+            max-width: 400px;
+            overflow-y: auto;
         }
         .image-container {
             width: 100%;
-            height: 300px;
+            height: 800px;
             border: 1px solid #ddd;
             margin-top: 10px;
             overflow: hidden;
             position: relative;
+            border-radius: 10px;
+            background-color: #f8f8f8;
         }
         canvas {
             max-width: 100%;
             max-height: 100%;
             display: block;
             margin: 0 auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
         .controls {
             margin: 20px 0;
             padding: 15px;
-            background: #f9f9f9;
-            border-radius: 5px;
+            background: #f5f5f5;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .control-group {
-            margin-bottom: 15px;
+            margin-bottom: 18px;
+            transition: all 0.2s ease;
         }
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: bold;
+            color: #333;
         }
         input[type="range"], select {
             width: 100%;
+            padding: 6px 0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .value-display {
+            float: right;
+            font-weight: normal;
+            color: #666;
         }
         .color-pickers {
             display: flex;
-            gap: 10px;
+            gap: 15px;
         }
         .color-picker {
             flex: 1;
@@ -91,60 +117,59 @@
             display: block;
             width: 100%;
             padding: 10px;
-            background-color: #3498db;
+            background-color: #333;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
         }
         button:hover {
-            background-color: #2980b9;
+            background-color: #555;
         }
         .export-button {
             margin-top: 20px;
-            background-color: #27ae60;
+            background-color: #000;
         }
         .export-button:hover {
-            background-color: #219653;
+            background-color: #333;
+        }
+        h3 {
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            color: #000000;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+                height: auto;
+            }
+            .image-section {
+                height: 50vh;
+                min-height: 300px;
+            }
         }
         .animation-controls {
             margin-top: 20px;
             padding: 15px;
-            background: #e8f4fc;
-            border-radius: 5px;
-            border-left: 4px solid #3498db;
-        }
-        .toggle-button {
-            display: inline-block;
-            width: auto;
-            margin-right: 10px;
+            background: #f0f0f0;
+            border-radius: 12px;
+            border-left: 4px solid #333;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .play-pause {
-            background-color: #e74c3c;
+            background-color: #444;
         }
         .play-pause:hover {
-            background-color: #c0392b;
+            background-color: #666;
         }
         .play-pause.playing {
-            background-color: #27ae60;
+            background-color: #000;
         }
         .play-pause.playing:hover {
-            background-color: #219653;
-        }
-        .checkbox-group {
-            margin: 10px 0;
-        }
-        .checkbox-group label {
-            display: inline-flex;
-            align-items: center;
-            font-weight: normal;
-            margin-right: 20px;
-            cursor: pointer;
-        }
-        .checkbox-group input[type="checkbox"] {
-            margin-right: 5px;
+            background-color: #333;
         }
         .export-options {
             display: flex;
@@ -156,177 +181,147 @@
         .export-option {
             flex: 1;
             min-width: 100px;
-            background-color: #2980b9;
+            background-color: #333;
             color: white;
             padding: 8px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
             font-size: 14px;
         }
         
         .export-option:hover {
-            background-color: #3498db;
+            background-color: #555;
         }
         
         #export-jpg {
-            background-color: #e74c3c;
+            background-color: #222;
         }
         
         #export-jpg:hover {
-            background-color: #c0392b;
+            background-color: #444;
         }
         
         #export-png {
-            background-color: #27ae60;
+            background-color: #111;
         }
         
         #export-png:hover {
-            background-color: #2ecc71;
+            background-color: #333;
         }
         
         #export-webp {
-            background-color: #f39c12;
+            background-color: #333;
         }
         
         #export-webp:hover {
-            background-color: #f1c40f;
+            background-color: #555;
         }
         
         #export-svg {
-            background-color: #8e44ad;
+            background-color: #000;
         }
         
         #export-svg:hover {
-            background-color: #9b59b6;
+            background-color: #222;
+        }
+        input[type="color"] {
+            width: 100%;
+            height: 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: white;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            cursor: pointer;
+        }
+        .preview-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .original-image, .processed-image {
+            flex: 2;
+            min-width: 400px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>图片弥散效果处理器</h1>
-        
-        <div class="upload-section" id="upload-area">
-            <p>点击或拖拽图片到这里上传</p>
-            <input type="file" id="file-input" accept="image/*">
-        </div>
-        
-        <div class="preview-section">
-            <div class="original-image">
-                <h3>原始图片</h3>
-                <div class="image-container">
-                    <canvas id="original-canvas"></canvas>
-                </div>
-            </div>
-            <div class="processed-image">
-                <h3>处理后效果</h3>
+        <div class="main-content">
+            <div class="image-section">
                 <div class="image-container">
                     <canvas id="processed-canvas"></canvas>
                 </div>
             </div>
-        </div>
-        
-        <div class="controls">
-            <div class="control-group">
-                <label for="diffusion-intensity">弥散程度：</label>
-                <input type="range" id="diffusion-intensity" min="1" max="50" value="10">
-                <span id="intensity-value">10</span>
-            </div>
             
-            <div class="control-group">
-                <label for="random-scale">随机分布范围：</label>
-                <input type="range" id="random-scale" min="1" max="100" value="50">
-                <span id="random-scale-value">50%</span>
-            </div>
-            
-            <div class="control-group">
-                <label for="pixel-size">像素大小：</label>
-                <input type="range" id="pixel-size" min="1" max="20" value="1">
-                <span id="pixel-size-value">1</span>
-            </div>
-            
-            <div class="control-group">
-                <label for="coherence">连贯性：</label>
-                <input type="range" id="coherence" min="0" max="100" value="30">
-                <span id="coherence-value">30%</span>
-            </div>
-            
-            <div class="control-group">
-                <label>颜色偏向：</label>
-                <div class="color-pickers">
-                    <div class="color-picker">
-                        <label for="color-influence">颜色强度：</label>
-                        <input type="range" id="color-influence" min="0" max="100" value="20">
-                        <span id="color-influence-value">20%</span>
+            <div class="controls-section">
+                <h1>图片弥散效果处理器</h1>
+                
+                <div class="upload-section" id="upload-area">
+                    <p>点击或拖拽图片到这里上传</p>
+                    <input type="file" id="file-input" accept="image/*">
+                </div>
+                
+                <div class="controls">
+                    <h3>效果调节</h3>
+                    <div class="control-group">
+                        <label for="diffusion-intensity">弥散程度 <span class="value-display" id="intensity-value">10</span></label>
+                        <input type="range" id="diffusion-intensity" min="1" max="50" value="10">
                     </div>
-                    <div class="color-picker">
-                        <label for="color-tone">颜色选择：</label>
-                        <input type="color" id="color-tone" value="#4a90e2">
+                    
+                    <div class="control-group">
+                        <label for="random-scale">随机分布范围 <span class="value-display" id="random-scale-value">50%</span></label>
+                        <input type="range" id="random-scale" min="1" max="100" value="50">
                     </div>
+                    
+                    <div class="control-group">
+                        <label for="pixel-size">像素大小 <span class="value-display" id="pixel-size-value">1</span></label>
+                        <input type="range" id="pixel-size" min="1" max="20" value="1">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="coherence">连贯性 <span class="value-display" id="coherence-value">30%</span></label>
+                        <input type="range" id="coherence" min="0" max="100" value="30">
+                    </div>
+                    
+                    <div class="control-group">
+                        <div class="color-pickers">
+                            <div class="color-picker">
+                                <label for="color-influence">强度 <span class="value-display" id="color-influence-value">20%</span></label>
+                                <input type="range" id="color-influence" min="0" max="100" value="20">
+                            </div>
+                            <div class="color-picker">
+                                <label for="color-tone">选择</label>
+                                <input type="color" id="color-tone" value="#4a90e2" style="width:100%; height:30px;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="noise-type">噪点类型</label>
+                        <select id="noise-type">
+                            <option value="uniform">均匀分布</option>
+                            <option value="gaussian">高斯分布</option>
+                            <option value="perlin">柏林噪声</option>
+                        </select>
+                    </div>
+                    
+                    <button class="export-button" id="export-button">导出为PNG</button>
                 </div>
             </div>
-            
-            <div class="control-group">
-                <label for="noise-type">噪点类型：</label>
-                <select id="noise-type">
-                    <option value="uniform">均匀分布</option>
-                    <option value="gaussian">高斯分布</option>
-                    <option value="perlin">柏林噪声</option>
-                </select>
-            </div>
-            
-            <div class="control-group">
-                <label for="edge-preserve">边缘保留度：</label>
-                <input type="range" id="edge-preserve" min="0" max="100" value="40">
-                <span id="edge-preserve-value">40%</span>
-            </div>
-            
-            <button id="apply-effect">应用效果</button>
-        </div>
-        
-        <div class="animation-controls">
-            <h3>动态效果控制</h3>
-            
-            <div class="control-group">
-                <button id="play-pause" class="toggle-button play-pause">播放动画</button>
-                <button id="reset-animation" class="toggle-button">重置动画</button>
-            </div>
-            
-            <div class="control-group">
-                <label for="animation-speed">动画速度：</label>
-                <input type="range" id="animation-speed" min="1" max="100" value="50">
-                <span id="speed-value">50</span>
-            </div>
-            
-            <div class="control-group">
-                <label for="animation-type">动画类型：</label>
-                <select id="animation-type">
-                    <option value="oscillate">振荡</option>
-                    <option value="rotate">旋转</option>
-                    <option value="pulse">脉动</option>
-                    <option value="flow">流动</option>
-                </select>
-            </div>
-            
-            <div class="checkbox-group">
-                <label>
-                    <input type="checkbox" id="auto-reverse" checked>
-                    自动反转
-                </label>
-                <label>
-                    <input type="checkbox" id="smooth-transition" checked>
-                    平滑过渡
-                </label>
-            </div>
-        </div>
-        
-        <button class="export-button" id="export-button">导出为JPG</button>
-        <div class="export-options">
-            <button class="export-option" id="export-jpg">导出JPG</button>
-            <button class="export-option" id="export-png">导出PNG</button>
-            <button class="export-option" id="export-webp">导出WebP</button>
-            <button class="export-option" id="export-svg">导出SVG</button>
         </div>
     </div>
 
@@ -334,14 +329,12 @@
         // 获取DOM元素
         const fileInput = document.getElementById('file-input');
         const uploadArea = document.getElementById('upload-area');
-        const originalCanvas = document.getElementById('original-canvas');
         const processedCanvas = document.getElementById('processed-canvas');
         const diffusionIntensity = document.getElementById('diffusion-intensity');
         const intensityValue = document.getElementById('intensity-value');
         const colorInfluence = document.getElementById('color-influence');
         const colorInfluenceValue = document.getElementById('color-influence-value');
         const colorTone = document.getElementById('color-tone');
-        const applyEffectBtn = document.getElementById('apply-effect');
         const exportBtn = document.getElementById('export-button');
         
         // 新增控制元素
@@ -352,27 +345,10 @@
         const coherence = document.getElementById('coherence');
         const coherenceValue = document.getElementById('coherence-value');
         const noiseType = document.getElementById('noise-type');
-        const edgePreserve = document.getElementById('edge-preserve');
-        const edgePreserveValue = document.getElementById('edge-preserve-value');
-
-        // 动画控制元素
-        const playPauseBtn = document.getElementById('play-pause');
-        const resetAnimationBtn = document.getElementById('reset-animation');
-        const animationSpeed = document.getElementById('animation-speed');
-        const speedValue = document.getElementById('speed-value');
-        const animationType = document.getElementById('animation-type');
-        const autoReverse = document.getElementById('auto-reverse');
-        const smoothTransition = document.getElementById('smooth-transition');
-
+        
         // 原始图像数据
         let originalImage = null;
-        
-        // 动画相关变量
-        let animationId = null;
-        let isPlaying = false;
-        let animationPhase = 0;
-        let baseIntensity = 10;
-        let animationDirection = 1;
+        let originalImageData = null;
         
         // 监听上传区域点击
         uploadArea.addEventListener('click', () => {
@@ -418,8 +394,8 @@
             reader.onload = (e) => {
                 originalImage = new Image();
                 originalImage.onload = () => {
-                    // 绘制原始图像
-                    drawOriginalImage();
+                    // 设置画布大小并绘制原始图像
+                    setupCanvas();
                     // 应用初始效果
                     applyEffect();
                 };
@@ -429,13 +405,11 @@
             reader.readAsDataURL(file);
         }
         
-        // 绘制原始图像
-        function drawOriginalImage() {
-            const ctx = originalCanvas.getContext('2d');
-            
+        // 设置画布大小并绘制原始图像
+        function setupCanvas() {
             // 调整画布大小以保持图像比例
-            const containerWidth = originalCanvas.parentElement.offsetWidth;
-            const containerHeight = originalCanvas.parentElement.offsetHeight;
+            const containerWidth = processedCanvas.parentElement.offsetWidth;
+            const containerHeight = processedCanvas.parentElement.offsetHeight;
             
             const scale = Math.min(
                 containerWidth / originalImage.width,
@@ -445,39 +419,41 @@
             const width = originalImage.width * scale;
             const height = originalImage.height * scale;
             
-            originalCanvas.width = width;
-            originalCanvas.height = height;
             processedCanvas.width = width;
             processedCanvas.height = height;
             
-            ctx.clearRect(0, 0, width, height);
-            ctx.drawImage(originalImage, 0, 0, width, height);
+            // 创建一个临时画布，用于存储原始图像数据
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = width;
+            tempCanvas.height = height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            tempCtx.clearRect(0, 0, width, height);
+            tempCtx.drawImage(originalImage, 0, 0, width, height);
+            
+            // 存储原始图像数据
+            originalImageData = tempCtx.getImageData(0, 0, width, height);
         }
         
         // 应用弥散效果
-        function applyEffect(animParams = {}) {
+        function applyEffect() {
             if (!originalImage) {
                 alert('请先上传图片！');
                 return;
             }
             
-            const originalCtx = originalCanvas.getContext('2d');
             const processedCtx = processedCanvas.getContext('2d');
             
-            const width = originalCanvas.width;
-            const height = originalCanvas.height;
-            
-            // 获取原始图像数据
-            const imageData = originalCtx.getImageData(0, 0, width, height);
-            const data = imageData.data;
+            const width = processedCanvas.width;
+            const height = processedCanvas.height;
             
             // 创建一个新的 ImageData 对象以存储处理后的图像
             const processedImageData = processedCtx.createImageData(width, height);
             const processedData = processedImageData.data;
             
             // 复制原始数据
-            for (let i = 0; i < data.length; i++) {
-                processedData[i] = data[i];
+            for (let i = 0; i < originalImageData.data.length; i++) {
+                processedData[i] = originalImageData.data[i];
             }
             
             // 获取参数值
@@ -485,27 +461,7 @@
             let rScale = parseInt(randomScale.value) / 100;
             let pSize = parseInt(pixelSize.value);
             let coh = parseInt(coherence.value) / 100;
-            let edgeP = parseInt(edgePreserve.value) / 100;
             let nType = noiseType.value;
-            
-            // 如果是动画模式，调整强度
-            if (animParams.animated) {
-                // 根据动画类型调整动画参数
-                switch (animationType.value) {
-                    case 'oscillate':
-                        intensity = intensity * (1 + Math.sin(animParams.phase) * 0.5);
-                        break;
-                    case 'pulse':
-                        intensity = intensity * (1 + Math.abs(Math.sin(animParams.phase)) * 0.7);
-                        break;
-                    case 'rotate':
-                        // 旋转动画保留原始强度，但会改变相位
-                        break;
-                    case 'flow':
-                        intensity = intensity * (1 + Math.cos(animParams.phase * 0.5) * 0.3);
-                        break;
-                }
-            }
             
             const colorInf = parseInt(colorInfluence.value) / 100;
             
@@ -516,12 +472,11 @@
             const b = parseInt(hex.substring(4, 6), 16);
             
             // 应用随机弥散效果
-            enhancedRandomDiffusion(processedData, width, height, intensity, colorInf, r, g, b, animParams, {
+            enhancedRandomDiffusion(processedData, width, height, intensity, colorInf, r, g, b, {
                 randomScale: rScale,
                 pixelSize: pSize,
                 coherence: coh,
-                noiseType: nType,
-                edgePreserve: edgeP
+                noiseType: nType
             });
             
             // 将处理后的数据绘制到画布上
@@ -578,53 +533,22 @@
         }
 
         // 增强的随机弥散效果
-        function enhancedRandomDiffusion(data, width, height, intensity, colorInf, r, g, b, animParams = {}, options = {}) {
-            const temp = new Uint8ClampedArray(data.length);
-            for (let i = 0; i < data.length; i++) {
-                temp[i] = data[i];
-            }
+        function enhancedRandomDiffusion(data, width, height, intensity, colorInf, r, g, b, options = {}) {
+            const temp = new Uint8ClampedArray(originalImageData.data);
             
             // 从选项中获取参数
             const randomScale = options.randomScale || 0.5;
             const pixelSize = options.pixelSize || 1;
             const coherence = options.coherence || 0.3;
             const noiseType = options.noiseType || 'uniform';
-            const edgePreserve = options.edgePreserve || 0.4;
             
-            // 使用相位作为随机种子
-            const phase = animParams.animated ? animParams.phase : 0;
+            // 使用随机种子
+            const phase = Math.random() * 100;
             
             // 检测边缘 - 使用简单的Sobel算子
             const edgeMap = new Float32Array(width * height);
-            if (edgePreserve > 0) {
-                for (let y = 1; y < height - 1; y++) {
-                    for (let x = 1; x < width - 1; x++) {
-                        const idx = (y * width + x) * 4;
-                        
-                        // 水平和垂直梯度的简化Sobel算子
-                        const gx = 
-                              -1 * temp[((y-1)*width + (x-1))*4] +
-                              1 * temp[((y-1)*width + (x+1))*4] +
-                              -2 * temp[((y)*width + (x-1))*4] +
-                              2 * temp[((y)*width + (x+1))*4] +
-                              -1 * temp[((y+1)*width + (x-1))*4] +
-                              1 * temp[((y+1)*width + (x+1))*4];
-                        
-                        const gy = 
-                              -1 * temp[((y-1)*width + (x-1))*4] +
-                              -2 * temp[((y-1)*width + (x))*4] +
-                              -1 * temp[((y-1)*width + (x+1))*4] +
-                              1 * temp[((y+1)*width + (x-1))*4] +
-                              2 * temp[((y+1)*width + (x))*4] +
-                              1 * temp[((y+1)*width + (x+1))*4];
-                        
-                        // 边缘强度
-                        edgeMap[y * width + x] = Math.sqrt(gx*gx + gy*gy) / 1024;
-                    }
-                }
-            }
             
-            // 创建一个伪随机函数，使动画在相同相位时产生相同的随机值
+            // 创建一个伪随机函数
             const pseudoRandom = (x, y) => {
                 return Math.sin(x * 12.9898 + y * 78.233 + phase) * 43758.5453 % 1;
             };
@@ -679,9 +603,6 @@
                             
                             // 边缘检测 - 如果是边缘，减少偏移量
                             let edgeFactor = 1;
-                            if (edgePreserve > 0 && x > 0 && x < width-1 && y > 0 && y < height-1) {
-                                edgeFactor = 1 - Math.min(1, edgeMap[y * width + x] * edgePreserve * 5);
-                            }
                             
                             // 计算最终偏移
                             let offsetX = groupOffset.x * edgeFactor;
@@ -712,449 +633,83 @@
             }
         }
         
-        // 动画循环
-        function animateEffect() {
-            if (!originalImage) return;
-            
-            // 更新动画相位
-            animationPhase += 0.05 * (parseInt(animationSpeed.value) / 50);
-            
-            // 如果启用了自动反转，检查是否需要反转方向
-            if (autoReverse.checked) {
-                if (animationPhase > Math.PI * 2) {
-                    animationDirection = -1;
-                } else if (animationPhase < 0) {
-                    animationDirection = 1;
-                }
-                animationPhase += 0.05 * (parseInt(animationSpeed.value) / 50) * animationDirection;
-            } else {
-                // 否则在完成一个循环后重置
-                if (animationPhase > Math.PI * 2) {
-                    animationPhase = 0;
-                }
-            }
-            
-            // 应用动画效果
-            applyEffect({
-                animated: true,
-                phase: animationPhase,
-                smooth: smoothTransition.checked
-            });
-            
-            // 继续动画循环
-            animationId = requestAnimationFrame(animateEffect);
-        }
-        
-        // 播放/暂停动画
-        function toggleAnimation() {
-            if (isPlaying) {
-                // 暂停动画
-                cancelAnimationFrame(animationId);
-                playPauseBtn.textContent = '播放动画';
-                playPauseBtn.classList.remove('playing');
-            } else {
-                // 开始动画
-                animationId = requestAnimationFrame(animateEffect);
-                playPauseBtn.textContent = '暂停动画';
-                playPauseBtn.classList.add('playing');
-            }
-            
-            isPlaying = !isPlaying;
-        }
-        
-        // 重置动画
-        function resetAnimation() {
-            animationPhase = 0;
-            animationDirection = 1;
-            
-            if (isPlaying) {
-                // 如果正在播放，应用最新效果
-                applyEffect({
-                    animated: true,
-                    phase: 0,
-                    smooth: smoothTransition.checked
-                });
-            } else {
-                // 如果已暂停，应用静态效果
-                applyEffect();
-            }
-        }
-        
         // 监听滑块变化并更新显示值
         diffusionIntensity.addEventListener('input', () => {
             intensityValue.textContent = diffusionIntensity.value;
-            baseIntensity = parseInt(diffusionIntensity.value);
-            if (!isPlaying) {
-                applyEffect();
-            }
+            applyEffect();
         });
-        
+
         colorInfluence.addEventListener('input', () => {
             colorInfluenceValue.textContent = `${colorInfluence.value}%`;
-            if (!isPlaying) {
-                applyEffect();
-            }
+            applyEffect();
         });
-        
+
         // 新增控制元素的监听器
         randomScale.addEventListener('input', () => {
             randomScaleValue.textContent = `${randomScale.value}%`;
-            if (!isPlaying) {
-                applyEffect();
-            }
+            applyEffect();
         });
 
         pixelSize.addEventListener('input', () => {
             pixelSizeValue.textContent = pixelSize.value;
-            if (!isPlaying) {
-                applyEffect();
-            }
+            applyEffect();
         });
 
         coherence.addEventListener('input', () => {
             coherenceValue.textContent = `${coherence.value}%`;
-            if (!isPlaying) {
-                applyEffect();
-            }
+            applyEffect();
         });
 
         noiseType.addEventListener('change', () => {
-            if (!isPlaying) {
-                applyEffect();
-            }
-        });
-
-        edgePreserve.addEventListener('input', () => {
-            edgePreserveValue.textContent = `${edgePreserve.value}%`;
-            if (!isPlaying) {
-                applyEffect();
-            }
-        });
-        
-        animationSpeed.addEventListener('input', () => {
-            speedValue.textContent = animationSpeed.value;
-        });
-        
-        // 监听颜色选择和弥散方法变化
-        colorTone.addEventListener('change', () => {
-            if (!isPlaying) {
-                applyEffect();
-            }
-        });
-        
-        // 监听动画类型变化
-        animationType.addEventListener('change', () => {
-            if (isPlaying) {
-                resetAnimation();
-            }
-        });
-        
-        // 监听应用效果按钮点击
-        applyEffectBtn.addEventListener('click', () => {
             applyEffect();
         });
         
-        // 监听动画控制按钮
-        playPauseBtn.addEventListener('click', toggleAnimation);
-        resetAnimationBtn.addEventListener('click', resetAnimation);
+        // 监听颜色选择
+        colorTone.addEventListener('change', () => {
+            applyEffect();
+        });
         
-        // 添加导出按钮的事件监听器
-        const exportJpgBtn = document.getElementById('export-jpg');
-        const exportPngBtn = document.getElementById('export-png');
-        const exportWebpBtn = document.getElementById('export-webp');
-        const exportSvgBtn = document.getElementById('export-svg');
-
-        // 修改导出为JPG
-        exportBtn.addEventListener('click', () => exportImage('jpeg'));
-        exportJpgBtn.addEventListener('click', () => exportImage('jpeg'));
-        exportPngBtn.addEventListener('click', () => exportImage('png'));
-        exportWebpBtn.addEventListener('click', () => exportImage('webp'));
-        exportSvgBtn.addEventListener('click', () => exportImage('svg'));
-
-        // 统一导出函数
-        function exportImage(format) {
+        // 导出为PNG
+        exportBtn.addEventListener('click', () => {
             if (!originalImage) {
                 alert('请先上传并处理图片！');
                 return;
             }
             
-            // 确认导出分辨率选项
-            const qualityOptions = ['原始尺寸', '2倍超分辨率', '4倍超分辨率', '自定义尺寸'];
-            let selectedOption = prompt(
-                '请选择导出图片的分辨率:\n1: 原始尺寸\n2: 2倍超分辨率\n3: 4倍超分辨率\n4: 自定义尺寸\n(输入选项编号)',
-                '1'
-            );
-            
-            // 设置输出尺寸
-            let outputWidth = originalImage.width;
-            let outputHeight = originalImage.height;
-            
-            // 处理用户选择
-            if (selectedOption === '2') {
-                // 2倍超分辨率
-                outputWidth = originalImage.width * 2;
-                outputHeight = originalImage.height * 2;
-            } else if (selectedOption === '3') {
-                // 4倍超分辨率
-                outputWidth = originalImage.width * 4;
-                outputHeight = originalImage.height * 4;
-            } else if (selectedOption === '4') {
-                // 自定义尺寸
-                const customWidth = parseInt(prompt('请输入宽度(像素):', originalImage.width));
-                const customHeight = parseInt(prompt('请输入高度(像素):', originalImage.height));
-                if (!isNaN(customWidth) && !isNaN(customHeight) && customWidth > 0 && customHeight > 0) {
-                    outputWidth = customWidth;
-                    outputHeight = customHeight;
-                }
-            }
-            
-            // 创建高质量渲染流程
-            const enhancementLevel = parseInt(prompt('请选择清晰度增强级别 (1-5，5为最高):', '3'));
-            
             try {
-                // 创建一个临时画布，使用设定的输出尺寸
+                // 创建一个临时画布，使用原始图片尺寸
                 const outputCanvas = document.createElement('canvas');
-                outputCanvas.width = outputWidth;
-                outputCanvas.height = outputHeight;
+                outputCanvas.width = originalImage.width;
+                outputCanvas.height = originalImage.height;
                 const outputCtx = outputCanvas.getContext('2d');
                 
                 // 设置高质量渲染选项
                 outputCtx.imageSmoothingEnabled = true;
                 outputCtx.imageSmoothingQuality = 'high';
                 
-                // 简化的处理流程 - 直接使用已经渲染好的画布内容
-                // 这确保导出的图像与用户看到的预览完全一致
+                // 处理图像 - 将处理后的效果应用到原始尺寸的图像上
+                // 获取当前处理效果
+                const processedCtx = processedCanvas.getContext('2d');
                 
-                // 1. 创建中间画布，保存当前效果
-                const intermediateCanvas = document.createElement('canvas');
-                intermediateCanvas.width = processedCanvas.width;
-                intermediateCanvas.height = processedCanvas.height;
-                const intermediateCtx = intermediateCanvas.getContext('2d');
-                
-                // 复制当前处理后的效果到中间画布
-                intermediateCtx.drawImage(processedCanvas, 0, 0);
-                
-                // 2. 将中间画布内容直接缩放到输出画布
-                outputCtx.drawImage(intermediateCanvas, 0, 0, intermediateCanvas.width, intermediateCanvas.height,
-                                  0, 0, outputWidth, outputHeight);
-                
-                // 仅当用户请求增强时应用锐化
-                if (enhancementLevel > 1) {
-                    // 应用锐化以提高缩放后的清晰度
-                    for (let i = 0; i < enhancementLevel - 1; i++) {
-                        applySharpening(outputCtx, outputWidth, outputHeight);
-                    }
-                }
+                // 将处理后的效果绘制到原始尺寸的画布上
+                outputCtx.drawImage(processedCanvas, 0, 0, processedCanvas.width, processedCanvas.height,
+                                 0, 0, originalImage.width, originalImage.height);
                 
                 // 创建临时链接以下载
                 const link = document.createElement('a');
-                let mimeType, quality;
-                
-                switch(format) {
-                    case "png":
-                        mimeType = "image/png";
-                        link.download = `处理后图片_${outputWidth}x${outputHeight}.png`;
-                        link.href = outputCanvas.toDataURL(mimeType);
-                        break;
-                    case "webp":
-                        mimeType = "image/webp";
-                        quality = 0.95;
-                        link.download = `处理后图片_${outputWidth}x${outputHeight}.webp`;
-                        link.href = outputCanvas.toDataURL(mimeType, quality);
-                        break;
-                    case "svg":
-                        // SVG导出
-                        link.download = `处理后图片_${outputWidth}x${outputHeight}.svg`;
-                        
-                        // SVG特定设置
-                        let svgComplexity = "2"; // 默认中等复杂度
-                        if (outputWidth > 500 || outputHeight > 500) {
-                            svgComplexity = prompt("SVG复杂度级别:\n1: 低 (文件小，细节少)\n2: 中 (平衡)\n3: 高 (文件大，细节多)\n输入数字:", "2");
-                        }
-                        
-                        const renderMethod = prompt("选择SVG渲染方式:\n1: 路径 (更适合艺术效果)\n2: 矩形 (更简单的表示)\n输入数字:", "1");
-                        
-                        // 获取SVG内容
-                        const svgContent = generateSVG(outputCanvas, outputWidth, outputHeight, svgComplexity, renderMethod);
-                        const svgBlob = new Blob([svgContent], {type: 'image/svg+xml'});
-                        link.href = URL.createObjectURL(svgBlob);
-                        break;
-                    default: // jpeg
-                        mimeType = "image/jpeg";
-                        quality = 0.95; // 提高JPEG质量
-                        link.download = `处理后图片_${outputWidth}x${outputHeight}.jpg`;
-                        link.href = outputCanvas.toDataURL(mimeType, quality);
-                }
+                link.download = `处理后图片_${originalImage.width}x${originalImage.height}.png`;
+                link.href = outputCanvas.toDataURL('image/png');
                 
                 // 开始下载
                 link.click();
                 
-                // 如果创建了Blob URL，需要释放
-                if (format === 'svg') {
-                    URL.revokeObjectURL(link.href);
-                }
-                
                 // 提示用户处理完成
-                alert(`图片导出成功！\n分辨率: ${outputWidth}x${outputHeight}\n格式: ${format.toUpperCase()}`);
+                alert(`图片导出成功！\n分辨率: ${originalImage.width}x${originalImage.height}\n格式: PNG`);
             } catch (error) {
                 console.error("导出过程中出错:", error);
-                alert("导出图片时出现错误，请尝试降低分辨率或刷新页面后重试。");
+                alert("导出图片时出现错误，请刷新页面后重试。");
             }
-        }
-        
-        // 生成SVG
-        function generateSVG(canvas, width, height, svgComplexity = "2", renderMethod = "1") {
-            const ctx = canvas.getContext('2d');
-            const imageData = ctx.getImageData(0, 0, width, height);
-            const data = imageData.data;
-            
-            // 根据复杂度确定采样率
-            let samplingRate;
-            switch(svgComplexity) {
-                case "1": samplingRate = Math.max(Math.ceil(width / 100), Math.ceil(height / 100)); break;
-                case "3": samplingRate = 1; break;
-                default: samplingRate = Math.max(Math.ceil(width / 200), Math.ceil(height / 200));
-            }
-            
-            // 构建SVG标题和背景
-            let svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-    <rect width="100%" height="100%" fill="white"/>
-`;
-            
-            if (renderMethod === "1") {
-                // 路径方法：使用颜色分组，为每组颜色创建一个路径
-                const colorPaths = {};
-                
-                // 处理每个像素
-                for (let y = 0; y < height; y += samplingRate) {
-                    for (let x = 0; x < width; x += samplingRate) {
-                        const index = (y * width + x) * 4;
-                        const r = data[index];
-                        const g = data[index + 1];
-                        const b = data[index + 2];
-                        const a = data[index + 3] / 255;
-                        
-                        if (a < 0.1) continue; // 跳过透明像素
-                        
-                        // 颜色量化，减少颜色数量
-                        const quantizationFactor = svgComplexity === "1" ? 32 : (svgComplexity === "2" ? 16 : 8);
-                        const qR = Math.round(r / quantizationFactor) * quantizationFactor;
-                        const qG = Math.round(g / quantizationFactor) * quantizationFactor;
-                        const qB = Math.round(b / quantizationFactor) * quantizationFactor;
-                        
-                        const color = `rgba(${qR},${qG},${qB},${a.toFixed(2)})`;
-                        
-                        if (!colorPaths[color]) {
-                            colorPaths[color] = [];
-                        }
-                        
-                        colorPaths[color].push({x, y});
-                    }
-                }
-                
-                // 将像素转换为SVG路径
-                for (const color in colorPaths) {
-                    const points = colorPaths[color];
-                    
-                    // 检查是否有足够的点
-                    if (points.length === 0) continue;
-                    
-                    // 创建路径
-                    let d = `M ${points[0].x} ${points[0].y} `;
-                    for (let i = 1; i < points.length; i++) {
-                        // 根据点的密度使用不同的路径命令
-                        if (i % 100 === 0) {
-                            // 每100个点使用一次移动命令，以防路径过长
-                            d += `M ${points[i].x} ${points[i].y} `;
-                        } else {
-                            d += `L ${points[i].x} ${points[i].y} `;
-                        }
-                    }
-                    
-                    svg += `    <path d="${d}" fill="${color}" stroke="none" />
-`;
-                }
-            } else {
-                // 矩形方法：为每个像素创建一个小矩形
-                for (let y = 0; y < height; y += samplingRate) {
-                    for (let x = 0; x < width; x += samplingRate) {
-                        const index = (y * width + x) * 4;
-                        const r = data[index];
-                        const g = data[index + 1];
-                        const b = data[index + 2];
-                        const a = data[index + 3] / 255;
-                        
-                        if (a < 0.1) continue; // 跳过透明像素
-                        
-                        // 颜色量化，减少SVG大小
-                        const quantizationFactor = svgComplexity === "1" ? 32 : (svgComplexity === "2" ? 16 : 8);
-                        const qR = Math.round(r / quantizationFactor) * quantizationFactor;
-                        const qG = Math.round(g / quantizationFactor) * quantizationFactor;
-                        const qB = Math.round(b / quantizationFactor) * quantizationFactor;
-                        
-                        svg += `    <rect x="${x}" y="${y}" width="${samplingRate}" height="${samplingRate}" fill="rgba(${qR},${qG},${qB},${a.toFixed(2)})" />
-`;
-                    }
-                }
-            }
-            
-            // 关闭SVG标签
-            svg += '</svg>';
-            
-            return svg;
-        }
-        
-        // 锐化处理函数 - 简化版本
-        function applySharpening(ctx, width, height) {
-            try {
-                // 获取图像数据
-                const imageData = ctx.getImageData(0, 0, width, height);
-                const data = imageData.data;
-                
-                // 创建一个临时数组来存储处理后的数据
-                const tempData = new Uint8ClampedArray(data);
-                
-                // 使用简单的锐化卷积核
-                const kernel = [
-                    0, -0.5, 0,
-                    -0.5, 3, -0.5,
-                    0, -0.5, 0
-                ];
-                
-                // 应用卷积
-                for (let y = 1; y < height - 1; y++) {
-                    for (let x = 1; x < width - 1; x++) {
-                        // 对每个颜色通道分别应用卷积
-                        for (let c = 0; c < 3; c++) {  // 只处理RGB通道，不处理Alpha
-                            const index = (y * width + x) * 4 + c;
-                            
-                            // 应用卷积
-                            let sum = 0;
-                            for (let ky = -1; ky <= 1; ky++) {
-                                for (let kx = -1; kx <= 1; kx++) {
-                                    const kernelIndex = (ky + 1) * 3 + (kx + 1);
-                                    const pixelIndex = ((y + ky) * width + (x + kx)) * 4 + c;
-                                    
-                                    if (pixelIndex >= 0 && pixelIndex < data.length) {
-                                        sum += data[pixelIndex] * kernel[kernelIndex];
-                                    }
-                                }
-                            }
-                            
-                            // 确保值在0-255范围内
-                            tempData[index] = Math.min(255, Math.max(0, sum));
-                        }
-                    }
-                }
-                
-                // 将处理后的数据放回画布
-                ctx.putImageData(new ImageData(tempData, width, height), 0, 0);
-            } catch (error) {
-                console.error("锐化处理出错:", error);
-                // 错误时不应用锐化，继续使用原图
-            }
-        }
+        });
     </script>
 </body>
 </html> 
